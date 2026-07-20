@@ -34,7 +34,7 @@ class ReviewedTemperatureHumidity extends ListRecords
             ->header(view('filament.tables.top-bottom-pagination-tables', [
                 'table' => $table,
             ]))
-            ->modifyQueryUsing(fn (Builder $query) => $query->with(['temperatureDeviations', 'roomTemperature'])->orderByDesc('date')->where('is_reviewed', false)
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['location', 'room', 'serialNumber', 'temperatureDeviations', 'roomTemperature'])->orderByDesc('date')->where('is_reviewed', false)
                 ->whereNotNull('time_0200')
                 ->whereNotNull('time_0500')
                 ->whereNotNull('time_0800')

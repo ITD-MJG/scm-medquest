@@ -549,7 +549,7 @@ class TemperatureHumidityResource extends Resource
                 'heading' => static::getHeading(),
             ]))
             ->modifyQueryUsing(function ($query) {
-                return $query->with(['temperatureDeviations', 'roomTemperature'])
+                return $query->with(['location', 'room', 'serialNumber', 'temperatureDeviations', 'roomTemperature'])
                     ->orderByDesc('date')->orderByDesc('created_at');
             })
             ->columns([
@@ -1024,8 +1024,7 @@ class TemperatureHumidityResource extends Resource
 
                         $date = Carbon::parse($data['period']);
 
-                        return $query->whereMonth('period', $date->month)
-                            ->whereYear('period', $date->year);
+                        return $query->whereBetween('period', [$date->startOfMonth(), $date->endOfMonth()]);
                     }),
             ])
             ->recordActions([

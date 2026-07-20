@@ -34,7 +34,7 @@ class AcknowledgedTemperatureHumidity extends listRecords
             ->header(view('filament.tables.top-bottom-pagination-tables', [
                 'table' => $table,
             ]))
-            ->modifyQueryUsing(fn (Builder $query) => $query->with(['temperatureDeviations', 'roomTemperature'])->orderByDesc('date')->where('is_acknowledged', false)
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['location', 'room', 'serialNumber', 'temperatureDeviations', 'roomTemperature'])->orderByDesc('date')->where('is_acknowledged', false)
                 ->whereNotNull('time_0200')
                 ->whereNotNull('time_0500')
                 ->whereNotNull('time_0800')

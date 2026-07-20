@@ -79,8 +79,7 @@ class ListTemperatureDeviations extends ListRecords
 
                         $query = TemperatureDeviation::query()
                             ->where('location_id', $location_id)
-                            ->whereMonth('date', $month)
-                            ->whereYear('date', $year)
+                            ->whereBetween('date', [Carbon::create($year, $month, 1)->startOfMonth(), Carbon::create($year, $month, 1)->endOfMonth()])
                             ->with(['location', 'room', 'serialNumber', 'roomTemperature']);
 
                         // If specific rooms are selected, filter by those rooms
@@ -163,8 +162,7 @@ class ListTemperatureDeviations extends ListRecords
 
                         $query = TemperatureDeviation::query()
                             ->where('location_id', $location_id)
-                            ->whereMonth('date', $month)
-                            ->whereYear('date', $year)
+                            ->whereBetween('date', [Carbon::create($year, $month, 1)->startOfMonth(), Carbon::create($year, $month, 1)->endOfMonth()])
                             ->with(['location', 'room', 'serialNumber', 'roomTemperature']);
 
                         // If specific rooms are selected, filter by those rooms

@@ -221,7 +221,7 @@ class TemperatureDeviationResource extends Resource
                 ]),
             )
             ->modifyQueryUsing(function ($query) {
-                return $query->orderByDesc('created_at');
+                return $query->with(['location', 'room', 'roomTemperature'])->orderByDesc('created_at');
             })
             ->columns([
                 TextColumn::make('date')->label('Date (Tanggal)')->sortable()->searchable()->date('d/m/Y'),
@@ -257,7 +257,7 @@ class TemperatureDeviationResource extends Resource
 
                         $date = Carbon::parse($data['period']);
 
-                        return $query->whereMonth('date', $date->month)->whereYear('date', $date->year);
+                        return $query->whereBetween('date', [$date->startOfMonth(), $date->endOfMonth()]);
                     }),
             ])
             ->recordActions([

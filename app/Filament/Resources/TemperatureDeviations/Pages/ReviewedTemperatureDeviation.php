@@ -32,7 +32,7 @@ class ReviewedTemperatureDeviation extends ListRecords
             ->header(view('filament.tables.top-bottom-pagination-tables', [
                 'table' => $table,
             ]))
-            ->modifyQueryUsing(fn (Builder $query) => $query->orderByDesc('date')->where('is_reviewed', false)->whereNotNull('length_temperature_deviation')->whereNotNull('risk_analysis'))
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['location', 'room', 'roomTemperature'])->orderByDesc('date')->where('is_reviewed', false)->whereNotNull('length_temperature_deviation')->whereNotNull('risk_analysis'))
             ->emptyStateHeading('No pending review data is found')
             ->columns([
                 TextColumn::make('date')

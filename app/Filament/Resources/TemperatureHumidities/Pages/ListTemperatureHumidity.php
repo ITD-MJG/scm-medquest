@@ -113,8 +113,7 @@ class ListTemperatureHumidity extends ListRecords
 
                         $query = TemperatureHumidity::query()
                             ->where('location_id', $location_id)
-                            ->whereMonth('period', $month)
-                            ->whereYear('period', $year)
+                            ->whereBetween('period', [Carbon::create($year, $month, 1)->startOfMonth(), Carbon::create($year, $month, 1)->endOfMonth()])
                             ->with(['location', 'room', 'serialNumber', 'roomTemperature']);
 
                         if (! empty($room_ids)) {
@@ -221,9 +220,7 @@ class ListTemperatureHumidity extends ListRecords
 
                         $query = TemperatureHumidity::query()
                             ->where('location_id', $location_id)
-                            ->whereMonth('period', $month)
-                            ->whereYear('period', $year)
-                            ->with(['location', 'room', 'serialNumber', 'roomTemperature']);
+                            ->whereBetween('period', [Carbon::create($year, $month, 1)->startOfMonth(), Carbon::create($year, $month, 1)->endOfMonth()]);
 
                         if (! empty($room_ids)) {
                             $query->whereIn('room_id', $room_ids);
@@ -303,8 +300,7 @@ class ListTemperatureHumidity extends ListRecords
                         // Get all records for this location and month
                         $records = TemperatureHumidity::query()
                             ->where('location_id', $location->id)
-                            ->whereMonth('period', $month)
-                            ->whereYear('period', $year)
+                            ->whereBetween('period', [Carbon::create($year, $month, 1)->startOfMonth(), Carbon::create($year, $month, 1)->endOfMonth()])
                             ->with(['location', 'room', 'serialNumber', 'roomTemperature'])
                             ->get();
 

@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Spatie\Browsershot\Browsershot;
 
+// Redirect root to dashboard
+Route::get('/', fn () => redirect(filament()->getHomeUrl()));
+
 // Email preview routes for development
 Route::get('/email-preview/review', function () {
     $mailable = new TemperatureHumidityBulkNotification(5, 'review');

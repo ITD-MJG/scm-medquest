@@ -36,21 +36,17 @@ class CreateTemperatureHumidity extends CreateRecord
     }
     protected function afterCreate()
     {
-        // Retrieve the created Temperature Humidity record and set temperature and time that triggers deviation
         $temperatureHumidity = $this->record;
+        $location = $temperatureHumidity->location;
+        $room = $temperatureHumidity->room;
+
         // Skip deviation detection for Super Admin (bypasses time windows)
         if (!auth()->user()->hasRole('Super Admin')) {
-            // Retrieve the temperature range from the location
-            $location = $temperatureHumidity->location;
-            $room = $temperatureHumidity->room;
             $roomTemp = $temperatureHumidity->roomTemperature;
             $minTemp = $roomTemp->temperature_start;
             $maxTemp = $roomTemp->temperature_end;
-
-            // Get current time to determine the current time slot
             $now = Carbon::now('Asia/Jakarta');
 
-            // Define temperature fields linked to their respective time fields with time windows
             $timeSlots = [
                 'temp_0200' => ['time_field' => 'time_0200', 'start' => '02:00:00', 'end' => '02:30:59'],
                 'temp_0500' => ['time_field' => 'time_0500', 'start' => '05:00:00', 'end' => '05:30:59'],
@@ -68,11 +64,10 @@ class CreateTemperatureHumidity extends CreateRecord
                 $end = Carbon::createFromTimeString($slotInfo['end'], 'Asia/Jakarta');
 
                 if ($now->between($start, $end)) {
-                    $tempValue = $temperatureHumidity->$tempField; // Get temperature value
-                    $inputtedTime = $temperatureHumidity->{$slotInfo['time_field']} ?? 'Unknown Time'; // Get user-inputted time
+                    $tempValue = $temperatureHumidity->$tempField;
+                    $inputtedTime = $temperatureHumidity->{$slotInfo['time_field']} ?? 'Unknown Time';
 
                     if (!is_null($tempValue) && ($tempValue < $minTemp || $tempValue > $maxTemp)) {
-                        // Only store deviation data for the current time slot
                         $deviationData = [[
                             'temperature_id' => $temperatureHumidity->id,
                             'location_id' => $temperatureHumidity->location_id,

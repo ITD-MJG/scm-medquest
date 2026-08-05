@@ -29,3 +29,10 @@ scm.log
 filament-custom-pagination-guide.txt
 table-top-pagination.blade.php
 .github
+AGENTS.md
+.qwen
+QWEN.md
+.gemini
+.tokensave
+opencode.json
+boost.json

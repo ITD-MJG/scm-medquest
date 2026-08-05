@@ -63,10 +63,11 @@ class EditTemperatureHumidity extends EditRecord
     protected function afterSave(): void
     {
         $record = $this->record;
-        // Get temperature range from related location
+        // Get temperature range from room temperature (not location)
+        $roomTemp = $record->roomTemperature;
+        $minTemp = $roomTemp->temperature_start;
+        $maxTemp = $roomTemp->temperature_end;
         $location = $record->location;
-        $minTemp = $location->temperature_start;
-        $maxTemp = $location->temperature_end;
         $now = Carbon::now('Asia/Jakarta');
 
         $timeWindows = [

@@ -188,7 +188,7 @@ Expected: FAIL — `Class "App\Models\Product" not found`.
 Columns are the spec's §5 tables. Points that are easy to get wrong:
 
 - `products.source` defaults to `'manual'`; `products.uom_source` defaults to `'sap'`. Both are `string(16)`, not enum columns — the enum cast lives on the model so values stay readable in SQL.
-- `products.sap_code` is `string` nullable with a **plain index**, not unique — MySQL permits repeated NULLs but the import matches on it, so keep it indexed.
+- `products.sap_code` is `string` nullable and **unique**. The spec (§5) mandates unique; an earlier draft of this plan claimed a plain index was needed because of repeated NULLs, but that reasoning was wrong — verified on this MariaDB that multiple NULLs are accepted under a UNIQUE index. Unique is both correct and what the spec requires.
 - **No `storage_areas` table.** Physical location reuses `locations` and `rooms`, which already exist and are unchanged. Do not add columns to either.
 - `products.principal_id` is nullable with `nullOnDelete()` — a product may be imported before its principal is known.
 - `is_active` boolean defaults true on every master table.

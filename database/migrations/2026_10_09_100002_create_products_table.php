@@ -23,7 +23,7 @@ return new class extends Migration
             $table->string('uom_source', 16)->default('sap');
             $table->string('storage_requirement')->nullable();
             $table->string('source', 16)->default('manual');
-            $table->string('sap_code')->nullable()->index();
+            $table->string('sap_code')->nullable()->unique();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });

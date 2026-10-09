@@ -10,7 +10,7 @@ return [
     | Format templates keyed by document type. Placeholders:
     | {seq} sequence number (zero-padded to `sequence_padding`),
     | {location_code} location code, {roman_month} roman numeral month,
-    | {yy} two-digit year, {month} two-digit month, {year} four-digit year.
+    | {yy} two-digit year, {mm} two-digit month, {yyyy} four-digit year.
     |
     */
 

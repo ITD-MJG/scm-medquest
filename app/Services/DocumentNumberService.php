@@ -6,6 +6,7 @@ use App\Models\DocumentSequence;
 use App\Models\Location;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 final class DocumentNumberService
 {
@@ -17,9 +18,20 @@ final class DocumentNumberService
      * The sequence row is read under lockForUpdate() inside a transaction. Without
      * the row lock two concurrent submissions read the same last_number and produce
      * the same number, which on a controlled document is a compliance defect (spec §6).
+     *
+     * An unknown $documentType has no format template and is rejected before any
+     * sequence row is touched, so a misconfigured type cannot burn a number.
+     *
+     * @throws InvalidArgumentException when no format is configured for $documentType
      */
     public function issue(string $documentType, ?int $locationId, CarbonInterface $date): string
     {
+        $format = config("documents.formats.{$documentType}");
+
+        if (! is_string($format) || $format === '') {
+            throw new InvalidArgumentException("No document number format configured for document type [{$documentType}].");
+        }
+
         $period = $date->format('Y-m');
 
         $sequence = DB::transaction(function () use ($documentType, $locationId, $period) {
@@ -45,10 +57,10 @@ final class DocumentNumberService
             return $sequence;
         });
 
-        return $this->render($documentType, (int) $sequence->last_number, $locationId, $date);
+        return $this->render($format, (int) $sequence->last_number, $locationId, $date);
     }
 
-    private function render(string $documentType, int $sequence, ?int $locationId, CarbonInterface $date): string
+    private function render(string $format, int $sequence, ?int $locationId, CarbonInterface $date): string
     {
         $location = $locationId === null ? null : Location::find($locationId);
 
@@ -63,7 +75,7 @@ final class DocumentNumberService
         $number = preg_replace_callback(
             '/\{seq:(\d+)\}/',
             fn (array $matches): string => str_pad((string) $sequence, (int) $matches[1], '0', STR_PAD_LEFT),
-            (string) config("documents.formats.{$documentType}")
+            $format
         );
 
         $number = str_replace('{seq}', str_pad((string) $sequence, (int) config('documents.sequence_padding', 4), '0', STR_PAD_LEFT), $number);

@@ -3,13 +3,6 @@
 use App\Models\User;
 use App\Support\SignatureFormatter;
 use Carbon\Carbon;
-use Spatie\Permission\Models\Role;
-
-beforeEach(function () {
-    foreach (['Supply Chain Officer', 'Security', 'QA Staff'] as $role) {
-        Role::create(['name' => $role]);
-    }
-});
 
 it('formats a signature as initial plus signing date', function () {
     $user = User::factory()->create(['initial' => 'IAN']);

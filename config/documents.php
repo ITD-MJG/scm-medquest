@@ -8,7 +8,8 @@ return [
     |--------------------------------------------------------------------------
     |
     | Format templates keyed by document type. Placeholders:
-    | {seq} sequence number (zero-padded to `sequence_padding`),
+    | {seq:N} sequence number zero-padded to N digits,
+    | {seq} sequence number zero-padded to `sequence_padding`,
     | {location_code} location code, {roman_month} roman numeral month,
     | {yy} two-digit year, {mm} two-digit month, {yyyy} four-digit year.
     |

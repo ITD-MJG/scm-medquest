@@ -19,7 +19,14 @@ return new class extends Migration
             $table->unsignedInteger('last_number')->default(0);
             $table->timestamps();
 
-            $table->unique(['document_type', 'location_id', 'period'], 'document_sequences_type_location_period_unique');
+            // NULL is distinct in a unique index on MySQL/MariaDB, so two rows with
+            // location_id = NULL for the same type+period would both be accepted and two
+            // first-time callers could each return sequence 0001 (spec §6). This generated
+            // column collapses NULL to 0 for index purposes; distinct non-null locations
+            // still get their own row.
+            $table->unsignedBigInteger('location_key')->storedAs('coalesce(location_id, 0)');
+
+            $table->unique(['document_type', 'location_key', 'period'], 'document_sequences_type_location_period_unique');
         });
     }
 

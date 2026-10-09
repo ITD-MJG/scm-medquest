@@ -240,7 +240,7 @@ it('rejects two batches with the same product, lot and expiry', function () {
         ->toThrow(Illuminate\Database\QueryException::class);
 });
 
-it('allows repeated batches with an empty lot and sentinel expiry', function () {
+it('rejects a second batch with an empty lot and sentinel expiry', function () {
     $product = Product::factory()->create();
 
     Batch::factory()->for($product)->create(['lot_no' => '', 'expiry_date' => Batch::EXPIRY_SENTINEL]);
@@ -277,7 +277,7 @@ Expected: FAIL — `Class "App\Models\Batch" not found`.
 
 - `lot_no` is `string` **NOT NULL DEFAULT ''**; `expiry_date` is `date` **NOT NULL DEFAULT '9999-12-31'`. This is the spec's §5 sentinel trade — read the spec's callout box before changing it. `NULL` would break the unique index on MySQL.
 - Unique index `batches_product_lot_expiry_unique` on `(product_id, lot_no, expiry_date)`.
-- Plain indexes on `status`, `location_id`, `expiry_date`.
+- Plain indexes on `status`, `location_id`, `room_id`, `expiry_date`.
 - `quantity` is `decimal(12,2)` default 0. `uom` is `string(16)`.
 - `product_id` FK uses `restrictOnDelete()` — a product with batch history must not be deletable (spec §8). `location_id` FK uses `cascadeOnDelete()->cascadeOnUpdate()`. `room_id` FK is nullable with `nullOnDelete()`.
 - The model declares `protected $casts = ['expiry_date' => 'date', 'status' => BatchStatus::class, 'quantity' => 'decimal:2']`.

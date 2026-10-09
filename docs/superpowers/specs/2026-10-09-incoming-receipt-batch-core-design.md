@@ -188,7 +188,7 @@ Three layers, each independently understandable and testable.
 ┌─────────────────────────────────────────────────────────────┐
 │ Presentation — Filament resources & pages                   │
 │  ProductResource, PrincipalResource, SupplierResource,      │
-│  CarrierResource, StorageAreaResource, BatchResource,       │
+│  CarrierResource, BatchResource,                            │
 │  IncomingReceiptResource                                    │
 ├─────────────────────────────────────────────────────────────┤
 │ Domain services — no Filament, no HTTP                      │
@@ -198,7 +198,7 @@ Three layers, each independently understandable and testable.
 │  Sap\ProductImportService  one-time bootstrap (adapter)     │
 ├─────────────────────────────────────────────────────────────┤
 │ Persistence — Eloquent models + migrations                  │
-│  Product Principal Supplier Carrier StorageArea Batch       │
+│  Product Principal Supplier Carrier Batch                   │
 │  IncomingReceipt IncomingReceiptLine                        │
 │  DocumentSequence DocumentSignoff                           │
 └─────────────────────────────────────────────────────────────┘
@@ -217,9 +217,9 @@ User submits CreateIncomingReceipt form
   → DB::transaction
       → DocumentNumberService::issue('incoming_receipt', location, period)
       → for each line:
-          → BatchResolver::resolve(product, lot_no, expiry_date, qty, uom, storage_area)
+          → BatchResolver::resolve(product, lot_no, expiry_date, qty, uom, room)
               → existing batch with same (product_id, lot_no, expiry_date)
-                  → append quantity, update storage area if provided, return batch
+                  → append quantity, set room only if still null, return batch
               → else create batch (status = quarantine), return batch
           → create IncomingReceiptLine(receipt_id, batch_id, ...line fields)
       → SignOffService::record(receipt, 'received_and_processed')
@@ -295,24 +295,22 @@ Grifols variant shows a shipper distinct from the carrier.
 | is_active | boolean default true | |
 | timestamps | | |
 
-### `storage_areas`
+### Physical location — reuse `locations` and `rooms`
 
-The form's "Storage Location Plan" (`AREA PACKAGING`), and the Relocation form's
-Warehouse / Area / Rack triple. Modelled as a flat named area with optional components now
-so the Relocation form needs no migration later.
+**No new table.** The form's "Storage Location Plan" (`AREA PACKAGING`) and the Relocation
+form's Warehouse / Area / Rack are expressed with the existing `locations` → `rooms`
+hierarchy, which already models "where things physically are" for the temperature module.
 
-| Column | Type | Notes |
-|---|---|---|
-| id | bigint PK | |
-| storageAreaId | uuid unique | |
-| location_id | FK → locations | |
-| warehouse | string nullable | for the Relocation form |
-| area | string | e.g. `AREA PACKAGING` |
-| rack | string nullable | for the Relocation form |
-| is_active | boolean default true | |
-| timestamps | | |
+| Form field | Existing entity |
+|---|---|
+| Site / warehouse (`Bizpark 1`, `Bizpark 2`) | `locations.location_name` |
+| Storage area (`AREA PACKAGING`, `COLD STORAGE 2`, `Gudang 1 Bizpark 2`) | `rooms.room_name` |
+| Rack (`D.13.E.3`) | not modelled — see below |
 
-Display label = the non-null parts of `warehouse / area / rack` joined with `/`.
+**Deferred:** the Relocation form (form 4, out of scope) has a distinct Rack column with
+values like `D.13.E.3`. It is not modelled here rather than guessed at. When form 4 is
+designed, the decision is either a nullable `rooms.rack` column or a separate level; it
+does not affect anything built in this phase.
 
 ### `batches`
 
@@ -323,17 +321,17 @@ The spine of the whole feature. One row per physical batch.
 | id | bigint PK | |
 | batchId | uuid unique | |
 | product_id | FK → products | |
-| lot_no | string nullable | `N/A` and blank both normalise to null |
-| expiry_date | date nullable | |
+| lot_no | string not null default `''` | `N/A` and blank both normalise to `''`, see the caveat below |
+| expiry_date | date not null default `9999-12-31` | see the caveat below |
 | quantity | decimal(12,2) default 0 | running total across receipts |
 | uom | string | copied from product, overridable per receipt |
 | status | string | enum-backed, see §5.2 |
-| storage_area_id | FK → storage_areas, nullable | current location |
-| location_id | FK → locations | denormalised for scoping; derived from storage area / receipt |
+| location_id | FK → locations | where the batch currently sits |
+| room_id | FK → rooms, nullable | storage area; nullable because a receipt may not name one |
 | timestamps | | |
 
 Unique index on `(product_id, lot_no, expiry_date)` — **but see the null caveat below.**
-Index on `status`, index on `location_id`, index on `expiry_date`.
+Index on `status`, index on `location_id`, index on `room_id`, index on `expiry_date`.
 
 > **MySQL/MariaDB unique-index null caveat.** MySQL treats `NULL` values as distinct in a
 > unique index, so `(1, NULL, NULL)` can be inserted repeatedly. A large share of lines on
@@ -398,7 +396,7 @@ Indexes: unique `receipt_no`, index `location_id`, index `receipt_date`.
 | registration_label_qa_by | FK → users, nullable | |
 | function_test_result | string nullable | |
 | function_test_by | string nullable | free text on the form |
-| storage_area_id | FK → storage_areas, nullable | |
+| room_id | FK → rooms, nullable | storage area named on this line |
 | timestamps | | |
 
 Line fields are **snapshots**, not joins. A product description edited next year must not
@@ -521,7 +519,7 @@ public function resolve(
     ?CarbonInterface $expiryDate,
     float $quantity,
     string $uom,
-    ?StorageArea $storageArea,
+    ?Room $room,
     int $locationId,
 ): Batch
 ```
@@ -529,9 +527,9 @@ public function resolve(
 - Normalises `$lotNo` (`null`, `''`, `'N/A'`, `'-'` → `''`) and `$expiryDate`
   (`null` → sentinel `9999-12-31`) so the unique index behaves.
 - Finds `Batch` by `(product_id, lot_no, expiry_date)`.
-- **Found:** adds `$quantity` to the existing batch, sets `storage_area_id` only if
-  currently null and a new one is provided, returns it. Quantity is appended because the
-  Expired and Relocation forms assume one row per physical batch.
+- **Found:** adds `$quantity` to the existing batch, sets `room_id` only if currently
+  null and a new one is provided, returns it. Quantity is appended because the Expired and
+  Relocation forms assume one row per physical batch.
 - **Not found:** creates the batch with `status = quarantine`.
 - Always runs inside the caller's transaction.
 
@@ -594,7 +592,6 @@ New resources under `app/Filament/Resources/`, each following the existing
 | `Principals` | Master Data | CRUD |
 | `Suppliers` | Master Data | CRUD |
 | `Carriers` | Master Data | CRUD |
-| `StorageAreas` | Master Data | CRUD, nested under location |
 | `Batches` | Inventory | read-mostly, status filter, expiry filter |
 | `IncomingReceipts` | Incoming | the main form |
 
@@ -608,7 +605,7 @@ New resources under `app/Filament/Resources/`, each following the existing
   `->addActionLabel('Add line')`. The repeater rows carry `internal_code`,
   `product_description`, `lot_no`, `expiry_date`, `quantity`, `uom`,
   `physical_packing_condition`, `registration_label_no`, `registration_label_qa_by`,
-  `function_test_result`, `function_test_by`, `storage_area_id`.
+  `function_test_result`, `function_test_by`, `room_id`.
 - Selecting a `Product` autofills `internal_code`, `product_description`, `uom` — but the
   fields stay editable, because the form is a record of what was physically observed, not
   a projection of the catalogue.
@@ -662,10 +659,10 @@ the doc number, revision, a line-item description, and each signer name — mirr
 - **SAP import failure** — the command exits non-zero with the driver error; nothing
   partial is committed (single transaction, or chunked with per-chunk transactions and a
   reported failure count).
-- **Storage area / product deleted while referenced** — foreign keys use
-  `cascadeOnDelete` for lines but `restrict` semantics are preferred for
-  `batches.product_id` so a product with history cannot be deleted; the resource offers
-  deactivation (`is_active = false`) instead.
+- **Room / product deleted while referenced** — `batches.product_id` uses `restrict`
+  semantics so a product with history cannot be deleted; the resource offers deactivation
+  (`is_active = false`) instead. `batches.room_id` is nullable with `nullOnDelete()`, so
+  removing a room clears the pointer rather than destroying batch history.
 
 ---
 
@@ -677,7 +674,7 @@ Following the existing Pest layout (`tests/Unit/Services/`, `tests/Feature/`).
 - `DocumentNumberServiceTest` — sequential issuance, per-period reset, per-location
   isolation, concurrent issuance via two connections yields distinct numbers.
 - `BatchResolverTest` — creates when absent; merges quantity when present; normalises
-  `N/A`/null/`-` into the sentinel; does not overwrite a non-null storage area.
+  `N/A`/null/`-` into the sentinel; does not overwrite a non-null room.
 - `SignOffServiceTest` — rejects wrong role; rejects out-of-order; rejects double-sign;
   `Super Admin` bypasses role but not order; `isComplete()` only when all steps signed.
 - `SignatureFormatterTest` — `initial + date` format; `Security` shows full name.
@@ -694,7 +691,7 @@ Following the existing Pest layout (`tests/Unit/Services/`, `tests/Feature/`).
   rows.
 
 Factories needed: `ProductFactory`, `PrincipalFactory`, `SupplierFactory`,
-`CarrierFactory`, `StorageAreaFactory`, `BatchFactory`, `IncomingReceiptFactory`.
+`CarrierFactory`, `BatchFactory`, `IncomingReceiptFactory`.
 
 ---
 
@@ -745,7 +742,8 @@ Implementation plan will follow via the writing-plans skill. Expected order:
 1. Enums + config (`documents.php`, `sap.php`), migrations, models, factories.
 2. `SignatureFormatter`, `DocumentNumberService`, `BatchResolver`, `SignOffService` + unit
    tests.
-3. Master-data Filament resources (Products, Principals, Suppliers, Carriers, StorageAreas).
+3. Master-data Filament resources (Products, Principals, Suppliers, Carriers).
+   `locations` and `rooms` already exist and are reused unchanged.
 4. `IncomingReceipt` model + `IncomingReceiptResource` + create/view/edit pages.
 5. Print blade + route + print test.
 6. `ProductImportService` + `sap:import-products` command (pending the table list).

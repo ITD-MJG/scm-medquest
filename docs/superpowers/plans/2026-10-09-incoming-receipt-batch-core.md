@@ -133,14 +133,14 @@ git commit -m "feat: add inventory enums and document config"
 - Create: `database/migrations/2026_10_09_100002_create_products_table.php`
 - Create: `database/migrations/2026_10_09_100003_create_suppliers_table.php`
 - Create: `database/migrations/2026_10_09_100004_create_carriers_table.php`
-- Create: `database/migrations/2026_10_09_100005_create_storage_areas_table.php`
-- Create: `app/Models/Principal.php`, `Product.php`, `Supplier.php`, `Carrier.php`, `StorageArea.php`
-- Create: `database/factories/PrincipalFactory.php`, `ProductFactory.php`, `SupplierFactory.php`, `CarrierFactory.php`, `StorageAreaFactory.php`
+- Create: `app/Models/Principal.php`, `Product.php`, `Supplier.php`, `Carrier.php`
+- Create: `database/factories/PrincipalFactory.php`, `ProductFactory.php`, `SupplierFactory.php`, `CarrierFactory.php`
 - Test: `tests/Unit/Models/MasterDataTest.php`
 
 **Interfaces:**
 - Consumes: `App\Enums\StorageRequirement`, `ProductSource` (Task 1).
-- Produces: models `Principal`, `Product`, `Supplier`, `Carrier`, `StorageArea` with `$guarded = ['id']` and `HasFactory`. `Product` casts `storage_requirement` → `StorageRequirement`, `source` → `ProductSource`; exposes `principal(): BelongsTo` and `batches(): HasMany`. `StorageArea` exposes `location(): BelongsTo` and `displayLabel(): string` (non-null parts of warehouse/area/rack joined with `/`). Factories take no required arguments and use `Str::orderedUuid()` for the UUID column.
+- Produces: models `Principal`, `Product`, `Supplier`, `Carrier` with `$guarded = ['id']` and `HasFactory`. `Product` casts `storage_requirement` → `StorageRequirement`, `source` → `ProductSource`; exposes `principal(): BelongsTo` and `batches(): HasMany`. Factories take no required arguments and use `Str::orderedUuid()` for the UUID column.
+- Reuses: the existing `Location` and `Room` models unchanged for physical storage location (see the spec's 'Physical location' section). `Room` already exposes `location(): BelongsTo`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -148,8 +148,9 @@ git commit -m "feat: add inventory enums and document config"
 // tests/Unit/Models/MasterDataTest.php
 use App\Enums\ProductSource;
 use App\Enums\StorageRequirement;
+use App\Models\Location;
 use App\Models\Product;
-use App\Models\StorageArea;
+use App\Models\Room;
 
 it('casts a product storage requirement to the enum', function () {
     $product = Product::factory()->create(['storage_requirement' => '2_8']);
@@ -161,16 +162,12 @@ it('defaults a product source to manual', function () {
     expect(Product::factory()->create()->source)->toBe(ProductSource::MANUAL);
 });
 
-it('builds a storage area display label from its non-null parts', function () {
-    $area = StorageArea::factory()->create(['warehouse' => 'BIZPARK1', 'area' => 'COLD STORAGE 4', 'rack' => 'A.9.B.3']);
+it('reuses a room as the storage area of a location', function () {
+    $location = Location::factory()->create(['location_name' => 'Bizpark 1']);
+    $room = Room::factory()->for($location)->create(['room_name' => 'Cold Storage 4']);
 
-    expect($area->displayLabel())->toBe('BIZPARK1/COLD STORAGE 4/A.9.B.3');
-});
-
-it('builds a storage area label when only area is set', function () {
-    $area = StorageArea::factory()->create(['warehouse' => null, 'area' => 'AREA PACKAGING', 'rack' => null]);
-
-    expect($area->displayLabel())->toBe('AREA PACKAGING');
+    expect($room->location->location_name)->toBe('Bizpark 1')
+        ->and($room->room_name)->toBe('Cold Storage 4');
 });
 
 it('rejects a duplicate product internal code', function () {
@@ -192,14 +189,14 @@ Columns are the spec's §5 tables. Points that are easy to get wrong:
 
 - `products.source` defaults to `'manual'`; `products.uom_source` defaults to `'sap'`. Both are `string(16)`, not enum columns — the enum cast lives on the model so values stay readable in SQL.
 - `products.sap_code` is `string` nullable with a **plain index**, not unique — MySQL permits repeated NULLs but the import matches on it, so keep it indexed.
-- `storage_areas` has `warehouse`, `area`, `rack` all `string` nullable **except** `area` which is required, plus `location_id` FK with `cascadeOnDelete()->cascadeOnUpdate()`, matching existing migrations.
+- **No `storage_areas` table.** Physical location reuses `locations` and `rooms`, which already exist and are unchanged. Do not add columns to either.
 - `products.principal_id` is nullable with `nullOnDelete()` — a product may be imported before its principal is known.
 - `is_active` boolean defaults true on every master table.
 
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `./vendor/bin/pest tests/Unit/Models/MasterDataTest.php`
-Expected: PASS, 5 tests.
+Expected: PASS, 4 tests.
 
 - [ ] **Step 5: Commit**
 
@@ -219,8 +216,8 @@ git commit -m "feat: add inventory master data schema and models"
 - Test: `tests/Unit/Models/BatchTest.php`
 
 **Interfaces:**
-- Consumes: `Product`, `StorageArea` (Task 2), `BatchStatus` (Task 1).
-- Produces: `Batch` model with public const `EXPIRY_SENTINEL = '9999-12-31'`; casts `status` → `BatchStatus`, `expiry_date` → `date`; relations `product(): BelongsTo`, `storageArea(): BelongsTo`, `location(): BelongsTo`, `receiptLines(): HasMany`. Accessors: `expiryDateLabel(): string` returning `'N/A'` for the sentinel and `d M Y` otherwise; `lotNoLabel(): string` returning `'N/A'` when `lot_no === ''`. `BatchFactory` requires nothing.
+- Consumes: `Product` (Task 2), `Location`/`Room` (existing), `BatchStatus` (Task 1).
+- Produces: `Batch` model with public const `EXPIRY_SENTINEL = '9999-12-31'`; casts `status` → `BatchStatus`, `expiry_date` → `date`; relations `product(): BelongsTo`, `room(): BelongsTo`, `location(): BelongsTo`, `receiptLines(): HasMany`. Accessors: `expiryDateLabel(): string` returning `'N/A'` for the sentinel and `d M Y` otherwise; `lotNoLabel(): string` returning `'N/A'` when `lot_no === ''`. `BatchFactory` requires nothing.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -282,7 +279,7 @@ Expected: FAIL — `Class "App\Models\Batch" not found`.
 - Unique index `batches_product_lot_expiry_unique` on `(product_id, lot_no, expiry_date)`.
 - Plain indexes on `status`, `location_id`, `expiry_date`.
 - `quantity` is `decimal(12,2)` default 0. `uom` is `string(16)`.
-- `product_id` FK uses `restrictOnDelete()` — a product with batch history must not be deletable (spec §8). `storage_area_id` FK is nullable with `nullOnDelete()`.
+- `product_id` FK uses `restrictOnDelete()` — a product with batch history must not be deletable (spec §8). `location_id` FK uses `cascadeOnDelete()->cascadeOnUpdate()`. `room_id` FK is nullable with `nullOnDelete()`.
 - The model declares `protected $casts = ['expiry_date' => 'date', 'status' => BatchStatus::class, 'quantity' => 'decimal:2']`.
 
 - [ ] **Step 4: Run test to verify it passes**
@@ -457,11 +454,11 @@ git commit -m "feat: add signature formatter and document number service"
 - Test: `tests/Unit/Services/BatchResolverTest.php`
 
 **Interfaces:**
-- Consumes: `Batch` (Task 3), `Product`/`StorageArea` (Task 2).
+- Consumes: `Batch` (Task 3), `Product` (Task 2), `Room` (existing).
 - Produces:
   - `BatchResolver::normalizeLotNo(?string $lotNo): string` — static; maps `null`, `''`, `'N/A'`, `'n/a'`, `'-'`, and whitespace-only to `''`.
   - `BatchResolver::normalizeExpiryDate(null|string|CarbonInterface $expiryDate): string` — static; maps `null`/`''`/`'N/A'`/`'-'` to `Batch::EXPIRY_SENTINEL`, else `Y-m-d`.
-  - `BatchResolver::resolve(Product $product, ?string $lotNo, null|string|CarbonInterface $expiryDate, float $quantity, string $uom, ?StorageArea $storageArea, int $locationId): Batch`
+  - `BatchResolver::resolve(Product $product, ?string $lotNo, null|string|CarbonInterface $expiryDate, float $quantity, string $uom, ?Room $room, int $locationId): Batch`
 
 - [ ] **Step 1: Write the failing test**
 
@@ -469,7 +466,6 @@ git commit -m "feat: add signature formatter and document number service"
 // tests/Unit/Services/BatchResolverTest.php
 use App\Models\Batch;
 use App\Models\Product;
-use App\Models\StorageArea;
 use App\Services\BatchResolver;
 
 it('normalises every none-like lot value to the empty string', function () {
@@ -520,27 +516,27 @@ it('merges two N/A lot lines into one batch', function () {
         ->and(Batch::count())->toBe(1);
 });
 
-it('does not overwrite a storage area that is already set', function () {
+it('does not overwrite a room that is already set', function () {
     $product = Product::factory()->create();
-    $original = StorageArea::factory()->create();
-    $replacement = StorageArea::factory()->create();
+    $original = Room::factory()->create();
+    $replacement = Room::factory()->create();
     $resolver = app(BatchResolver::class);
 
     $resolver->resolve($product, '471000', '2025-12-31', 5.0, 'KIT', $original, 1);
     $batch = $resolver->resolve($product, '471000', '2025-12-31', 5.0, 'KIT', $replacement, 1);
 
-    expect($batch->fresh()->storage_area_id)->toBe($original->id);
+    expect($batch->fresh()->room_id)->toBe($original->id);
 });
 
-it('sets the storage area when the batch has none', function () {
+it('sets the room when the batch has none', function () {
     $product = Product::factory()->create();
-    $area = StorageArea::factory()->create();
+    $room = Room::factory()->create();
     $resolver = app(BatchResolver::class);
 
     $resolver->resolve($product, '471000', '2025-12-31', 5.0, 'KIT', null, 1);
-    $batch = $resolver->resolve($product, '471000', '2025-12-31', 5.0, 'KIT', $area, 1);
+    $batch = $resolver->resolve($product, '471000', '2025-12-31', 5.0, 'KIT', $room, 1);
 
-    expect($batch->fresh()->storage_area_id)->toBe($area->id);
+    expect($batch->fresh()->room_id)->toBe($room->id);
 });
 
 it('keeps separate batches for different lots of one product', function () {
@@ -561,7 +557,7 @@ Expected: FAIL — `Class "App\Services\BatchResolver" not found`.
 
 - [ ] **Step 3: Implement `BatchResolver`**
 
-Both normalisers are static and pure so they are cheap to test. `resolve()` looks up `Batch` by the three normalised key columns, then either appends quantity or creates. Set `storage_area_id` on an existing batch **only when it is currently null** — the Expired/Relocation forms assume the first-recorded location wins (spec §6). `location_id` is always set from the argument on create and never changed on merge.
+Both normalisers are static and pure so they are cheap to test. `resolve()` looks up `Batch` by the three normalised key columns, then either appends quantity or creates. Set `room_id` on an existing batch **only when it is currently null** — the Expired/Relocation forms assume the first-recorded location wins (spec §6). `location_id` is always set from the argument on create and never changed on merge.
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -725,8 +721,8 @@ git commit -m "feat: add ordered role-gated sign-off service"
 - Test: `tests/Unit/Models/IncomingReceiptTest.php`
 
 **Interfaces:**
-- Consumes: `Batch` (Task 3), `Product`/`Supplier`/`Carrier`/`StorageArea` (Task 2), `IncomingType`/`ProductStatus`/`StorageRequirement` (Task 1), `HasSignOffs` (Task 6).
-- Produces: `IncomingReceipt` implementing `HasSignOffs`, with `documentType(): string` returning `'incoming_receipt'`; casts `incoming_type` → `IncomingType`, `product_status` → `ProductStatus`, `storage_requirement` → `StorageRequirement`, `receipt_date` → `date`, `unpacking_start_at`/`unpacking_finish_at` → `datetime`; relations `lines(): HasMany`, `location()`, `supplier()`, `carrier()`. `IncomingReceiptLine` with relations `receipt(): BelongsTo`, `batch(): BelongsTo`, `storageArea(): BelongsTo`. Factories require nothing.
+- Consumes: `Batch` (Task 3), `Product`/`Supplier`/`Carrier` (Task 2), `Room` (existing), `IncomingType`/`ProductStatus`/`StorageRequirement` (Task 1), `HasSignOffs` (Task 6).
+- Produces: `IncomingReceipt` implementing `HasSignOffs`, with `documentType(): string` returning `'incoming_receipt'`; casts `incoming_type` → `IncomingType`, `product_status` → `ProductStatus`, `storage_requirement` → `StorageRequirement`, `receipt_date` → `date`, `unpacking_start_at`/`unpacking_finish_at` → `datetime`; relations `lines(): HasMany`, `location()`, `supplier()`, `carrier()`. `IncomingReceiptLine` with relations `receipt(): BelongsTo`, `batch(): BelongsTo`, `room(): BelongsTo`. Factories require nothing.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -810,12 +806,12 @@ git commit -m "feat: add incoming receipt schema and models"
 **Files:**
 - Create: `app/Filament/Resources/Principals/{PrincipalResource.php,Pages/{List,Create,Edit}Principal.php}`
 - Create: `app/Filament/Resources/Products/{ProductResource.php,Pages/{List,Create,Edit}Product.php}`
-- Create: `app/Filament/Resources/Suppliers/…`, `Carriers/…`, `StorageAreas/…`
+- Create: `app/Filament/Resources/Suppliers/…`, `Carriers/…`
 - Test: `tests/Feature/MasterDataAccessTest.php`
 
 **Interfaces:**
-- Consumes: `Product`, `Principal`, `Supplier`, `Carrier`, `StorageArea` (Task 2); `HasLocationBasedAccess`.
-- Produces: five Filament resources under the `Master Data` navigation group, each with `index`/`create`/`edit` pages. `canViewAny()` restricted to `['Super Admin', 'Admin']`.
+- Consumes: `Product`, `Principal`, `Supplier`, `Carrier` (Task 2); `HasLocationBasedAccess`.
+- Produces: four Filament resources under the `Master Data` navigation group, each with `index`/`create`/`edit` pages. `canViewAny()` restricted to `['Super Admin', 'Admin']`. `LocationResource` and `RoomResource` already exist and are **not** modified.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -841,7 +837,7 @@ it('hides the products list from a supply chain officer', function () {
 Run: `./vendor/bin/pest tests/Feature/MasterDataAccessTest.php`
 Expected: FAIL — 404, route `/dashboard/products` does not exist.
 
-- [ ] **Step 3: Implement the five resources**
+- [ ] **Step 3: Implement the four resources**
 
 Follow `SerialNumberResource`'s shape — a single `form()`/`table()` on the resource, `getPages()` returning `index`/`create`/`edit`, `canViewAny()` gated on `['Super Admin', 'Admin']`, `->header(view('filament.tables.top-bottom-pagination-tables', ...))` on the table to match house style.
 
@@ -989,7 +985,7 @@ DB::transaction:
   $number = app(DocumentNumberService::class)->issue('incoming_receipt', $data['location_id'], $data['receipt_date'])
   $receipt = IncomingReceipt::create([...header..., 'receiptId' => Str::orderedUuid(), 'receipt_no' => $number, 'created_by' => auth()->id()])
   foreach ($data['lines'] as $i => $line):
-      $batch = app(BatchResolver::class)->resolve($product, $line['lot_no'], $line['expiry_date'], $line['quantity'], $line['uom'], $storageArea, $data['location_id'])
+      $batch = app(BatchResolver::class)->resolve(Product::find($line['product_id']), $line['lot_no'], $line['expiry_date'], $line['quantity'], $line['uom'], $line['room_id'] ? Room::find($line['room_id']) : null, $data['location_id'])
       $receipt->lines()->create([...snapshot fields..., 'batch_id' => $batch->id, 'line_no' => $i + 1])
   app(SignOffService::class)->record($receipt, 'received_and_processed')
   return $receipt
@@ -1342,7 +1338,6 @@ git commit -m "feat: add one-time SAP product bootstrap import"
 ```php
 // tests/Feature/InventorySeederTest.php
 use App\Models\Product;
-use App\Models\StorageArea;
 use Database\Seeders\InventoryMasterDataSeeder;
 
 it('seeds the sample form products idempotently', function () {
@@ -1353,11 +1348,15 @@ it('seeds the sample form products idempotently', function () {
         ->and(Product::where('internal_code', 'PAC-N-00008')->count())->toBe(1);
 });
 
-it('seeds the sample storage areas', function () {
+it('does not seed rooms that already exist', function () {
+    $location = Location::factory()->create();
+    Room::factory()->for($location)->create(['room_name' => 'Cold Storage 4']);
+    $before = Room::count();
+
     $this->seed(InventoryMasterDataSeeder::class);
 
-    expect(StorageArea::where('area', 'AREA PACKAGING')->exists())->toBeTrue()
-        ->and(StorageArea::where('area', 'COLD STORAGE 4')->exists())->toBeTrue();
+    expect(Room::where('room_name', 'Cold Storage 4')->count())->toBe(1)
+        ->and(Room::count())->toBeGreaterThanOrEqual($before);
 });
 ```
 
@@ -1368,9 +1367,9 @@ Expected: FAIL — `Class "Database\Seeders\InventoryMasterDataSeeder" not found
 
 - [ ] **Step 3: Implement the seeder**
 
-Use `updateOrCreate` keyed on the stable identifier (`internal_code` for products, `area` for storage areas) so re-running is safe — the first test pins idempotency.
+Use `updateOrCreate` keyed on the stable identifier (`internal_code` for products, `room_name` within a location for rooms) so re-running is safe — the first test pins idempotency.
 
-Seed the values actually read off the forms: products `DIS-T-00003` (9DC.0001, Diaspect Hemoglobin Cuvettes, DIASPECT), `DIS-T-00007`, `MDI-T-00001`, `DIA-T-00076`, `DIA-T-00077`, `PAC-N-00008` (KARTON LEMBARAN DOUBLE K150/M X 4 UKURAN 48 X 31 CM), and the Grifols set `GHL-T-00021`…`GHL-T-00027`. Principals `DIASPECT`. Storage areas `AREA PACKAGING`, `BIZPARK1/COLD STORAGE 2`, `BIZPARK1/COLD STORAGE 4`. Carriers `PT. JAYA GUNA JATI`, `IOL LOGISTICS`. Suppliers `PT. JAYA GUNA JATI`, `GRIFOLS - SINGAPORE`, `PT. MEDQUEST JAYA GLOBAL`.
+Seed the values actually read off the forms. Products `DIS-T-00003` (9DC.0001, Diaspect Hemoglobin Cuvettes, DIASPECT), `DIS-T-00007`, `MDI-T-00001`, `DIA-T-00076`, `DIA-T-00077`, `PAC-N-00008` (KARTON LEMBARAN DOUBLE K150/M X 4 UKURAN 48 X 31 CM), and the Grifols set `GHL-T-00021`…`GHL-T-00027`. Principals `DIASPECT`. Rooms: the existing `RoomSeeder` already covers `Cold Storage 1–4`, `Air Cond Storage 1–3` and `Gudang 1–3 Bizpark 2`. Only add rooms the forms name that are missing — `AREA PACKAGING` — via `firstOrCreate` on `(location_id, room_name)` so the seeder stays idempotent and does not duplicate `RoomSeeder`'s rows. Carriers `PT. JAYA GUNA JATI`, `IOL LOGISTICS`. Suppliers `PT. JAYA GUNA JATI`, `GRIFOLS - SINGAPORE`, `PT. MEDQUEST JAYA GLOBAL`.
 
 - [ ] **Step 4: Run test to verify it passes**
 

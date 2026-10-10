@@ -9,19 +9,28 @@ use App\Filament\Resources\IncomingReceipts\Pages\ViewIncomingReceipt;
 use App\Filament\Resources\IncomingReceipts\Schemas\IncomingReceiptForm;
 use App\Filament\Resources\IncomingReceipts\Tables\IncomingReceiptsTable;
 use App\Models\IncomingReceipt;
+use App\Traits\HasLocationBasedAccess;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class IncomingReceiptResource extends Resource
 {
+    use HasLocationBasedAccess;
+
     protected static ?string $model = IncomingReceipt::class;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Incoming';
 
+    public static function getEloquentQuery(): Builder
+    {
+        return static::applyLocationFilter(parent::getEloquentQuery());
+    }
+
     public static function canViewAny(): bool
     {
-        return auth()->user()->hasRole(['Super Admin', 'Admin', 'Supply Chain Manager', 'Supply Chain Officer']);
+        return auth()->user()->hasRole(['Super Admin', 'Admin', 'Supply Chain Manager', 'Supply Chain Officer', 'QA Manager', 'QA Supervisor', 'QA Staff']);
     }
 
     public static function form(Schema $schema): Schema

@@ -4,6 +4,7 @@
 
 use App\Http\Controllers\Auth\LogoutController;
 use App\Mail\TemperatureHumidityBulkNotification;
+use App\Models\IncomingReceipt;
 use App\Models\TemperatureDeviation; // Add this line
 use App\Models\TemperatureHumidity;
 use Carbon\Carbon;
@@ -110,6 +111,18 @@ Route::get('/temperature-deviations/bulk-export', function () {
         ->header('Content-Type', 'application/pdf')
         ->header('Content-Disposition', 'inline; filename="'.$filename.'"');
 })->name('temperature-deviations.bulk-export-pdf');
+
+Route::get('/incoming-receipts/{record}/print', function (IncomingReceipt $record) {
+    $html = view('print.incoming-receipt', [
+        'receipt' => $record->load('lines.batch.product', 'signoffs', 'location', 'supplier', 'carrier'),
+    ]);
+
+    $pdf = Browsershot::html($html)->format('A4')->margins(3, 3, 3, 3)->landscape()->showBackground()->pdf();
+
+    return response($pdf, 200)
+        ->header('Content-Type', 'application/pdf')
+        ->header('Content-Disposition', 'inline; filename="IncomingReceipt_'.$record->receipt_no.'.pdf"');
+})->name('incoming-receipts.print')->middleware(['auth']);
 
 // Custom logout routes
 Route::post('/logout/403', [LogoutController::class, 'logoutFrom403'])->name('logout.403');

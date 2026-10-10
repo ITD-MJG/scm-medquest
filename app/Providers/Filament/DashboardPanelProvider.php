@@ -2,32 +2,30 @@
 
 namespace App\Providers\Filament;
 
-use Filament\Support\Enums\Width;
-use App\Http\Middleware\CheckPasswordChangeRequired;
-use Filament\Pages;
-use Filament\Panel;
-use Filament\Widgets;
-use Filament\PanelProvider;
-use App\Filament\Pages\Login;
-use Filament\Enums\ThemeMode;
-use Filament\Navigation\MenuItem;
-use Filament\Support\Colors\Color;
 use App\Filament\Pages\EditProfile;
-use Illuminate\Support\Facades\Auth;
-use Filament\Navigation\NavigationItem;
-use Filament\Navigation\NavigationGroup;
-use Filament\Http\Middleware\Authenticate;
-use Illuminate\Session\Middleware\StartSession;
-use Illuminate\Cookie\Middleware\EncryptCookies;
-use Filament\Http\Middleware\AuthenticateSession;
-use Illuminate\Routing\Middleware\SubstituteBindings;
-use Illuminate\View\Middleware\ShareErrorsFromSession;
-use App\Filament\Resources\TemperatureHumidities\TemperatureHumidityResource;
+use App\Filament\Pages\Login;
 use App\Filament\Resources\TemperatureDeviations\TemperatureDeviationResource;
+use App\Filament\Resources\TemperatureHumidities\TemperatureHumidityResource;
+use App\Http\Middleware\CheckPasswordChangeRequired;
+use Filament\Enums\ThemeMode;
+use Filament\Http\Middleware\Authenticate;
+use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Filament\Navigation\MenuItem;
+use Filament\Navigation\NavigationGroup;
+use Filament\Navigation\NavigationItem;
+use Filament\Panel;
+use Filament\PanelProvider;
+use Filament\Support\Colors\Color;
+use Filament\Support\Enums\Width;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Routing\Middleware\SubstituteBindings;
+use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class DashboardPanelProvider extends PanelProvider
 {
@@ -54,53 +52,53 @@ class DashboardPanelProvider extends PanelProvider
             ])
             ->userMenuItems([
                 'profile' => MenuItem::make()
-                    ->label(fn() => Auth::user()->name)
-                    ->url(fn() => EditProfile::getUrl())
+                    ->label(fn () => Auth::user()->name)
+                    ->url(fn () => EditProfile::getUrl())
                     ->icon('heroicon-o-user-circle'),
             ])
             ->navigationItems([
                 // Temperature & Humidity
                 NavigationItem::make('All')
                     ->label('All')
-                    ->url(fn() => TemperatureHumidityResource::getUrl('index'))
+                    ->url(fn () => TemperatureHumidityResource::getUrl('index'))
                     ->group('Temperature & Humidity')
                     ->isActiveWhen(fn () => request()->routeIs('filament.dashboard.resources.temperature-humidities.index'))
                     ->sort(1),
                 NavigationItem::make('Pending Review')
                     ->label('Pending Review')
-                    ->url(fn() => TemperatureHumidityResource::getUrl('reviewed'))
+                    ->url(fn () => TemperatureHumidityResource::getUrl('reviewed'))
                     ->group('Temperature & Humidity')
                     ->isActiveWhen(fn () => request()->routeIs('filament.dashboard.resources.temperature-humidities.reviewed'))
-                    ->visible(fn() => auth()->user()->hasRole(['Super Admin', 'Supply Chain Manager', 'QA Manager']))
+                    ->visible(fn () => auth()->user()->hasRole(['Super Admin', 'Supply Chain Manager', 'QA Manager']))
                     ->sort(1),
                 NavigationItem::make('Pending Acknowledgement')
                     ->label('Pending Acknowledgement')
-                    ->url(fn() => TemperatureHumidityResource::getUrl('acknowledged'))                    
+                    ->url(fn () => TemperatureHumidityResource::getUrl('acknowledged'))
                     ->group('Temperature & Humidity')
                     ->isActiveWhen(fn () => request()->routeIs('filament.dashboard.resources.temperature-humidities.acknowledged'))
-                    ->visible(fn() => auth()->user()->hasRole(['Super Admin', 'Supply Chain Manager', 'QA Manager']))
+                    ->visible(fn () => auth()->user()->hasRole(['Super Admin', 'Supply Chain Manager', 'QA Manager']))
                     ->sort(2),
 
                 // Temperature Deviation
                 NavigationItem::make('All')
                     ->label('All')
-                    ->url(fn() => TemperatureDeviationResource::getUrl('index'))
+                    ->url(fn () => TemperatureDeviationResource::getUrl('index'))
                     ->group('Temperature Deviation')
                     ->isActiveWhen(fn () => request()->routeIs('filament.dashboard.resources.temperature-deviations.index'))
                     ->sort(1),
                 NavigationItem::make('Pending Review')
                     ->label('Pending Review')
-                    ->url(fn() => TemperatureDeviationResource::getUrl('reviewed'))
+                    ->url(fn () => TemperatureDeviationResource::getUrl('reviewed'))
                     ->group('Temperature Deviation')
                     ->isActiveWhen(fn () => request()->routeIs('filament.dashboard.resources.temperature-deviations.reviewed'))
-                    ->visible(fn() => auth()->user()->hasRole(['Super Admin', 'Supply Chain Manager', 'QA Manager']))
+                    ->visible(fn () => auth()->user()->hasRole(['Super Admin', 'Supply Chain Manager', 'QA Manager']))
                     ->sort(1),
                 NavigationItem::make('Pending Acknowledgement')
                     ->label('Pending Acknowledgement')
-                    ->url(fn() => TemperatureDeviationResource::getUrl('acknowledged'))                    
+                    ->url(fn () => TemperatureDeviationResource::getUrl('acknowledged'))
                     ->group('Temperature Deviation')
                     ->isActiveWhen(fn () => request()->routeIs('filament.dashboard.resources.temperature-deviations.acknowledged'))
-                    ->visible(fn() => auth()->user()->hasRole(['Super Admin', 'Supply Chain Manager', 'QA Manager']))
+                    ->visible(fn () => auth()->user()->hasRole(['Super Admin', 'Supply Chain Manager', 'QA Manager']))
                     ->sort(2),
             ])
             ->navigationGroups([
@@ -114,6 +112,10 @@ class DashboardPanelProvider extends PanelProvider
                 NavigationGroup::make()
                     ->label('Location Management')
                     ->icon('heroicon-o-map-pin')
+                    ->collapsed(true),
+                NavigationGroup::make()
+                    ->label('Master Data')
+                    ->icon('heroicon-o-circle-stack')
                     ->collapsed(true),
                 NavigationGroup::make()
                     ->label('Admin Settings')

@@ -107,11 +107,11 @@
                     </div>
                     <div class="col-8">
                         <p class="mb-0" style="font-size: 11px;">:&ensp;{{ $receipt->receipt_no ?? '-' }}</p>
-                        <p class="mb-0" style="font-size: 11px;">:&ensp;{{ $receipt->po_no ?? '-' }}</p>
+                        <p class="mb-0" style="font-size: 11px;">:&ensp;{{ $receipt->purchase_order_no ?? '-' }}</p>
                         <p class="mb-0" style="font-size: 11px;">
                             :&ensp;{{ $receipt->receipt_date ? strtoupper(\Carbon\Carbon::parse($receipt->receipt_date)->format('d M Y H:i')) : '-' }}</p>
-                        <p class="mb-0" style="font-size: 11px;">:&ensp;{{ $receipt->supplier->supplier_name ?? '-' }}</p>
-                        <p class="mb-0" style="font-size: 11px;">:&ensp;{{ $receipt->carrier->carrier_name ?? '-' }}</p>
+                        <p class="mb-0" style="font-size: 11px;">:&ensp;{{ $receipt->supplier->name ?? '-' }}</p>
+                        <p class="mb-0" style="font-size: 11px;">:&ensp;{{ $receipt->carrier->name ?? '-' }}</p>
                         <p class="mb-0" style="font-size: 11px;">:&ensp;{{ $receipt->incoming_type?->value ?? $receipt->incoming_type ?? '-' }}</p>
                     </div>
                 </div>
@@ -132,9 +132,9 @@
                     <div class="col-8">
                         <p class="mb-0" style="font-size: 11px;">:&ensp;{{ $receipt->storage_requirement ?? '-' }}</p>
                         <p class="mb-0" style="font-size: 11px;">
-                            :&ensp;{{ $receipt->unpacking_start_time ?? '-' }} / {{ $receipt->unpacking_finish_time ?? '-' }}</p>
+                            :&ensp;{{ $receipt->unpacking_start_at ?? '-' }} / {{ $receipt->unpacking_finish_at ?? '-' }}</p>
                         <p class="mb-0" style="font-size: 11px;">:&ensp;{{ $checkbox($receipt->measured_by_device ?? false) }}</p>
-                        <p class="mb-0" style="font-size: 11px;">:&ensp;{{ $receipt->product_temperature_result ?? '-' }}</p>
+                        <p class="mb-0" style="font-size: 11px;">:&ensp;{{ $receipt->product_temp_result ?? '-' }}</p>
                         <p class="mb-0" style="font-size: 11px;">:&ensp;{{ $receipt->product_status?->value ?? $receipt->product_status ?? '-' }}</p>
                         <p class="mb-0" style="font-size: 11px;">:&ensp;{{ $receipt->location->location_name ?? '-' }}</p>
                         <p class="mb-0" style="font-size: 11px;">:&ensp;{{ $receipt->remark ?? '-' }}</p>

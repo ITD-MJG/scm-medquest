@@ -14,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class IncomingReceiptResource extends Resource
 {
@@ -41,6 +42,11 @@ class IncomingReceiptResource extends Resource
     public static function table(Table $table): Table
     {
         return IncomingReceiptsTable::configure($table);
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return $record->signoffs()->count() === 0 || auth()->user()->hasRole('Super Admin');
     }
 
     public static function getPages(): array

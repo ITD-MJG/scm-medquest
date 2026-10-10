@@ -17,6 +17,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class CarrierResource extends Resource
 {
@@ -25,6 +26,21 @@ class CarrierResource extends Resource
     protected static string|\UnitEnum|null $navigationGroup = 'Master Data';
 
     public static function canViewAny(): bool
+    {
+        return auth()->user()->hasRole(['Super Admin', 'Admin']);
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()->hasRole(['Super Admin', 'Admin']);
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return auth()->user()->hasRole(['Super Admin', 'Admin']);
+    }
+
+    public static function canDelete(Model $record): bool
     {
         return auth()->user()->hasRole(['Super Admin', 'Admin']);
     }

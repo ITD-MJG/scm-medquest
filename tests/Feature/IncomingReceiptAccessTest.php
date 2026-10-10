@@ -1,7 +1,10 @@
 <?php
 
+use App\Filament\Resources\IncomingReceipts\IncomingReceiptResource;
+use App\Filament\Resources\IncomingReceipts\Pages\EditIncomingReceipt;
 use App\Models\IncomingReceipt;
 use App\Models\Location;
+use App\Models\Product;
 use App\Models\User;
 use App\Services\SignOffService;
 use Database\Seeders\RoleSeeder;
@@ -58,4 +61,49 @@ it('shows a manager every location', function () {
         ->assertSuccessful()
         ->assertSee('A/1')
         ->assertSee('B/1');
+});
+
+it('denies deleting a receipt to anyone but a super admin', function () {
+    $receipt = IncomingReceipt::factory()->create();
+    $officer = User::factory()->create()->assignRole('Supply Chain Officer');
+    $this->actingAs($officer);
+
+    expect(IncomingReceiptResource::canDelete($receipt))->toBeFalse();
+});
+
+it('allows deleting a receipt only for a super admin', function () {
+    $receipt = IncomingReceipt::factory()->create();
+    $admin = User::factory()->create()->assignRole('Super Admin');
+    $this->actingAs($admin);
+
+    expect(IncomingReceiptResource::canDelete($receipt))->toBeTrue();
+});
+
+it('records an edit override signoff when a super admin saves a signed receipt', function () {
+    $location = Location::factory()->create();
+    $receipt = IncomingReceipt::factory()->create(['location_id' => $location->id]);
+    $officer = User::factory()->create()->assignRole('Supply Chain Officer');
+    app(SignOffService::class)->record($receipt, 'received_and_processed', $officer);
+
+    $admin = User::factory()->create(['location_id' => $location->id])->assignRole('Super Admin');
+
+    $product = Product::factory()->create();
+
+    Livewire::actingAs($admin)->test(EditIncomingReceipt::class, ['record' => $receipt->getKey()])
+        ->fillForm([
+            'remark' => 'edited by super admin under override',
+            'lines' => [[
+                'product_id' => $product->getKey(),
+                'internal_code' => $product->internal_code,
+                'product_description' => $product->description,
+                'lot_no' => 'LOT-1',
+                'quantity' => 5,
+                'uom' => $product->uom,
+            ]],
+        ])
+        ->call('save');
+
+    expect($receipt->signoffs()->where('step', 'edit_override')->count())->toBe(1)
+        ->and($receipt->signoffs()->where('step', 'edit_override')->first()->role_required)->toBe('Super Admin')
+        ->and($receipt->signoffs()->where('step', 'edit_override')->first()->user_id)->toBe($admin->id);
 });

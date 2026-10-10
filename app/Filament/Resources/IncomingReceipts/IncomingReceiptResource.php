@@ -49,6 +49,11 @@ class IncomingReceiptResource extends Resource
         return $record->signoffs()->count() === 0 || auth()->user()->hasRole('Super Admin');
     }
 
+    public static function canDelete(Model $record): bool
+    {
+        return auth()->user()->hasRole('Super Admin');
+    }
+
     public static function getPages(): array
     {
         return [

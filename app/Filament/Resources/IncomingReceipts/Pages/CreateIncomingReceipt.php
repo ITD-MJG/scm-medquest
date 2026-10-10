@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -49,7 +50,8 @@ class CreateIncomingReceipt extends CreateRecord
             ]);
 
             foreach ($data['lines'] ?? [] as $i => $line) {
-                $batch = app(BatchResolver::class)->resolve(
+                $resolver = app(BatchResolver::class);
+                $args = [
                     Product::find($line['product_id']),
                     $line['lot_no'],
                     $line['expiry_date'] ?: null,
@@ -57,7 +59,21 @@ class CreateIncomingReceipt extends CreateRecord
                     $line['uom'],
                     ! empty($line['room_id']) ? Room::find($line['room_id']) : null,
                     $data['location_id'],
-                );
+                ];
+
+                // Spec §8: under concurrency two writers can race on the
+                // (product_id, lot_no, expiry_date) unique index. Retry once
+                // inside the transaction — the second lookup finds the
+                // winner's row and merges instead of creating.
+                try {
+                    $batch = $resolver->resolve(...$args);
+                } catch (QueryException $e) {
+                    if (! str_contains($e->getMessage(), 'SQLSTATE[23000]') || ! str_contains($e->getMessage(), '1062')) {
+                        throw $e;
+                    }
+
+                    $batch = $resolver->resolve(...$args);
+                }
 
                 $receipt->lines()->create([
                     'batch_id' => $batch->id,

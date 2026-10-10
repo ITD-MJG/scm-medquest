@@ -7,6 +7,7 @@ use App\Mail\TemperatureHumidityBulkNotification;
 use App\Models\IncomingReceipt;
 use App\Models\TemperatureDeviation; // Add this line
 use App\Models\TemperatureHumidity;
+use App\Traits\HasLocationBasedAccess;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
@@ -113,15 +114,19 @@ Route::get('/temperature-deviations/bulk-export', function () {
 })->name('temperature-deviations.bulk-export-pdf');
 
 Route::get('/incoming-receipts/{record}/print', function (IncomingReceipt $record) {
+    abort_unless(HasLocationBasedAccess::canAccessLocation((int) $record->location_id), 403);
+
     $html = view('print.incoming-receipt', [
         'receipt' => $record->load('lines.batch.product', 'signoffs', 'location', 'supplier', 'carrier'),
     ]);
 
     $pdf = Browsershot::html($html)->format('A4')->margins(3, 3, 3, 3)->landscape()->showBackground()->pdf();
 
+    $filename = preg_replace('/[^A-Za-z0-9\-_]/', '_', $record->receipt_no);
+
     return response($pdf, 200)
         ->header('Content-Type', 'application/pdf')
-        ->header('Content-Disposition', 'inline; filename="IncomingReceipt_'.$record->receipt_no.'.pdf"');
+        ->header('Content-Disposition', 'inline; filename="IncomingReceipt_'.$filename.'.pdf"');
 })->name('incoming-receipts.print')->middleware(['auth']);
 
 // Custom logout routes

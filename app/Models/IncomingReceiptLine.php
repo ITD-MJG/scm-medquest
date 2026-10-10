@@ -34,4 +34,14 @@ class IncomingReceiptLine extends Model
     {
         return $this->belongsTo(Room::class);
     }
+
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
+    }
+
+    public function registrationLabelQaBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'registration_label_qa_by');
+    }
 }

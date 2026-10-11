@@ -87,6 +87,14 @@ class SapConnectionTester
             $connection->password,
         );
 
+        // unixODBC needs ODBCINST to find the HDBODBC driver registration;
+        // fall back to the HANA client's own location when unset.
+        if (getenv('ODBCINST') === false && getenv('ODBCINI') === false) {
+            putenv('ODBCINST='.(is_file('/etc/odbcinst.ini')
+                ? '/etc/odbcinst.ini'
+                : $_SERVER['HOME'].'/.odbcinst.ini'));
+        }
+
         return new \PDO($dsn, $connection->username, $connection->password);
     }
 }

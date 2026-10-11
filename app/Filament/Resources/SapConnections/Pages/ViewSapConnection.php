@@ -28,22 +28,20 @@ class ViewSapConnection extends ViewRecord
                     try {
                         $message = app(SapConnectionTester::class)->test($record);
 
-                        $this->successNotification(
-                            Notification::make()
-                                ->title('Connection successful')
-                                ->body($message)
-                                ->success()
-                        );
+                        Notification::make()
+                            ->title('Connection successful')
+                            ->body($message)
+                            ->success()
+                            ->send();
                     } catch (\Throwable $e) {
-                        $this->failureNotification(
-                            Notification::make()
-                                ->title('Connection failed')
-                                ->body($e->getMessage())
-                                ->danger()
-                        );
+                        Notification::make()
+                            ->title('Connection failed')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->send();
                     }
 
-                    $this->refreshFormData(['last_test_status', 'last_tested_at', 'last_test_message']);
+                    $record->refresh();
                 }),
             Action::make('edit')
                 ->url(fn () => SapConnectionResource::getUrl('edit', ['record' => $this->record])),

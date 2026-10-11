@@ -48,7 +48,7 @@ class SapConnectionTester
             'driver' => $connection->driver,
             'host' => $connection->host,
             'port' => $connection->port,
-            'database' => $connection->database,
+            'database' => $connection->database ?? ($connection->driver === 'sqlsrv' ? 'master' : null),
             'username' => $connection->username,
             'password' => $connection->password,
             'prefix' => '',

@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('driver')->default('mysql')->comment('sap db driver: mysql, sqlsrv');
             $table->string('host');
             $table->unsignedInteger('port')->default(3306);
-            $table->string('database');
+            $table->string('database')->nullable();
             $table->string('username');
             $table->text('password')->nullable();
             $table->boolean('is_active')->default(false);

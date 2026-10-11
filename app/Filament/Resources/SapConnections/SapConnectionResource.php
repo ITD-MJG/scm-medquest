@@ -66,7 +66,7 @@ class SapConnectionResource extends Resource
                             ->required(),
 
                         TextInput::make('database')
-                            ->required()
+                            ->nullable()
                             ->maxLength(255),
 
                         TextInput::make('username')

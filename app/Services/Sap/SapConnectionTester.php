@@ -44,7 +44,7 @@ class SapConnectionTester
 
     private function configFor(SapConnection $connection): array
     {
-        $config = [
+        $config = collect([
             'driver' => $connection->driver,
             'host' => $connection->host,
             'port' => $connection->port,
@@ -52,7 +52,7 @@ class SapConnectionTester
             'username' => $connection->username,
             'password' => $connection->password,
             'prefix' => '',
-        ];
+        ])->filter(fn ($v) => $v !== null)->all();
 
         if ($connection->driver === 'sqlsrv') {
             $config['charset'] = 'utf8';

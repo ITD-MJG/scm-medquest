@@ -18,12 +18,15 @@ class SapConnectionTester
         ]);
 
         try {
-            config(['database.connections.sap_connection_test' => $this->configFor($connection)]);
+            if ($connection->driver === 'hana') {
+                $pdo = $this->hanaPdo($connection);
+            } else {
+                config(['database.connections.sap_connection_test' => $this->configFor($connection)]);
 
-            $pdo = DB::connection('sap_connection_test')->getPdo();
+                $pdo = DB::connection('sap_connection_test')->getPdo();
 
-            DB::purge('sap_connection_test');
-
+                DB::purge('sap_connection_test');
+            }
             $version = $pdo->getAttribute(\PDO::ATTR_SERVER_VERSION) ?? 'unknown version';
 
             $connection->forceFill([
@@ -71,26 +74,19 @@ class SapConnectionTester
 
     /**
      * SAP HANA over PDO_ODBC using a DSN-less connection string.
+     * Created directly — Laravel's connection factory has no odbc connector.
      * Requires the HANA ODBC driver (libodbcHDB.so) installed on this host.
      */
-    private function hanaConfigFor(SapConnection $connection): array
+    private function hanaPdo(SapConnection $connection): \PDO
     {
-        $config = [
-            'driver' => 'odbc',
-            'dsn' => sprintf(
-                'DRIVER={HDBODBC};SERVERNODE=%s:%d;UID=%s;PWD=%s;CHARSET=utf8',
-                $connection->host,
-                $connection->port ?? 30015,
-                $connection->username,
-                $connection->password,
-            ),
-            'prefix' => '',
-        ];
+        $dsn = sprintf(
+            'odbc:DRIVER={HDBODBC};SERVERNODE=%s:%d;UID=%s;PWD=%s;CHARSET=utf8',
+            $connection->host,
+            $connection->port ?? 30015,
+            $connection->username,
+            $connection->password,
+        );
 
-        // ConnectionFactory reads $config['database'] unconditionally when
-        // constructing the connection, so it must always be present.
-        $config['database'] = $connection->database ?? '';
-
-        return $config;
+        return new \PDO($dsn, $connection->username, $connection->password);
     }
 }

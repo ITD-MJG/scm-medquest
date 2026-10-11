@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\SapConnection;
 use App\Services\Sap\ProductImportService;
 use Illuminate\Console\Command;
 
@@ -13,6 +14,8 @@ class ImportSapProducts extends Command
      * @var string
      */
     protected $signature = 'sap:import-products
+                            {--connection= : SapConnection name or ID (defaults to the active hana connection)}
+                            {--schema=MJG_LIVE : HANA schema holding OITM/OITB}
                             {--force : Overwrite manual products and user-corrected UoMs}';
 
     /**
@@ -33,7 +36,29 @@ class ImportSapProducts extends Command
             return self::SUCCESS;
         }
 
-        $result = $service->import((bool) $this->option('force'));
+        $connection = null;
+        if ($name = $this->option('connection')) {
+            $connection = SapConnection::where('name', $name)->first()
+                ?? SapConnection::find($name);
+
+            if ($connection === null) {
+                $this->error("SAP connection [{$name}] not found.");
+
+                return self::FAILURE;
+            }
+        }
+
+        try {
+            $result = $service->import(
+                $connection,
+                (string) $this->option('schema'),
+                (bool) $this->option('force'),
+            );
+        } catch (\Throwable $e) {
+            $this->error($e->getMessage());
+
+            return self::FAILURE;
+        }
 
         $this->info("Import finished: {$result->created} created, {$result->updated} updated, {$result->skipped} skipped.");
 

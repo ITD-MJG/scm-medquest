@@ -63,12 +63,12 @@ old row (create with no variant) reads back `standard`.
 | key | label (printed) | role |
 |---|---|---|
 | `received_by` | Received by | Supply Chain Officer |
-| `inspected_by` | Inspected by (QA personnel) | QA Staff |
-| `verified_by` | Verified by (QA Supervisor) | QA Supervisor |
-| `checked_by_scm` | Checked by (Supply Chain Manager) | Supply Chain Manager |
+| `inspected_by` | Inspected by | QA Staff |
+| `verified_by` | Verified by | QA Supervisor |
+| `checked_by_scm` | Checked by | Supply Chain Manager |
 | `disposition` | Disposition (by Grifols SCM) | Supply Chain Manager |
-| `sap_entry_by` | Entry data to the SAP System (performed by) | Supply Chain Administration System Staff |
-| `verified_by_whm` | Verified by (Warehouse Manager) | Warehouse Manager |
+| `sap_entry_by` | Entry data to the SAP System | Supply Chain Administration System Staff |
+| `verified_by_whm` | Verified by | Warehouse Manager |
 
 - Modify: `database/seeders/RoleSeeder.php` — add `QA Supervisor`,
   `Supply Chain Administration System Staff`, `Warehouse Manager` (create-first,

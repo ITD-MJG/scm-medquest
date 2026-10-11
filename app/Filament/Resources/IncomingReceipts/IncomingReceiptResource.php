@@ -26,7 +26,9 @@ class IncomingReceiptResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return static::applyLocationFilter(parent::getEloquentQuery());
+        // Variant filter keeps grifols rows visible only in their own resource
+        // (GrifolsReceiptResource mirrors this with 'grifols').
+        return static::applyLocationFilter(parent::getEloquentQuery()->where('variant', 'standard'));
     }
 
     public static function canViewAny(): bool

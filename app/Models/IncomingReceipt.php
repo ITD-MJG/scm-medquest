@@ -31,7 +31,7 @@ class IncomingReceipt extends Model implements HasSignOffs
 
     public function documentType(): string
     {
-        return 'incoming_receipt';
+        return $this->variant === 'grifols' ? 'incoming_receipt_grifols' : 'incoming_receipt';
     }
 
     public function signoffs(): HasMany

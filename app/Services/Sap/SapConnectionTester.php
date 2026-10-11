@@ -44,6 +44,10 @@ class SapConnectionTester
 
     private function configFor(SapConnection $connection): array
     {
+        if ($connection->driver === 'hana') {
+            return $this->hanaConfigFor($connection);
+        }
+
         $config = collect([
             'driver' => $connection->driver,
             'host' => $connection->host,
@@ -60,6 +64,31 @@ class SapConnectionTester
             $config['charset'] = 'utf8mb4';
             $config['collation'] = 'utf8mb4_unicode_ci';
             $config['strict'] = true;
+        }
+
+        return $config;
+    }
+
+    /**
+     * SAP HANA over PDO_ODBC using a DSN-less connection string.
+     * Requires the HANA ODBC driver (libodbcHDB.so) installed on this host.
+     */
+    private function hanaConfigFor(SapConnection $connection): array
+    {
+        $config = [
+            'driver' => 'odbc',
+            'dsn' => sprintf(
+                'DRIVER={HDBODBC};SERVERNODE=%s:%d;UID=%s;PWD=%s;CHARSET=utf8',
+                $connection->host,
+                $connection->port ?? 30015,
+                $connection->username,
+                $connection->password,
+            ),
+            'prefix' => '',
+        ];
+
+        if (filled($connection->database)) {
+            $config['database'] = $connection->database;
         }
 
         return $config;

@@ -153,3 +153,26 @@ it('table test action invokes tester', function () {
 
     expect($conn->last_test_status)->toBe('success');
 });
+
+it('builds hana odbc config without leaking password in message', function () {
+    $this->actingAs(sapAdmin());
+
+    $conn = SapConnection::create([
+        'name' => 'HANA', 'driver' => 'hana', 'host' => '192.0.2.99',
+        'port' => 30015, 'database' => null,
+        'username' => 'SYSTEM', 'password' => 'secretpw',
+    ]);
+
+    try {
+        app(SapConnectionTester::class)->test($conn);
+        $this->fail('expected failure (unreachable)');
+    } catch (Throwable $e) {
+        // expected — host is unreachable
+    }
+
+    $conn->refresh();
+
+    expect($conn->last_test_status)->toBe('failed')
+        ->and($conn->driver)->toBe('hana')
+        ->and($conn->last_test_message)->not->toContain('secretpw');
+});

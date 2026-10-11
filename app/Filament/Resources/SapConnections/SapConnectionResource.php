@@ -51,6 +51,7 @@ class SapConnectionResource extends Resource
                             ->options([
                                 'mysql' => 'MySQL / MariaDB',
                                 'sqlsrv' => 'SQL Server',
+                                'hana' => 'SAP HANA',
                             ])
                             ->default('mysql')
                             ->required()
@@ -62,7 +63,11 @@ class SapConnectionResource extends Resource
 
                         TextInput::make('port')
                             ->numeric()
-                            ->default(fn (callable $get) => $get('driver') === 'sqlsrv' ? 1433 : 3306)
+                            ->default(fn (callable $get) => match ($get('driver')) {
+                                'sqlsrv' => 1433,
+                                'hana' => 30015,
+                                default => 3306,
+                            })
                             ->required(),
 
                         TextInput::make('database')

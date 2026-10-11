@@ -42,6 +42,11 @@ return [
             'effective_date' => '16 OCT 2025',
             'revision' => '12',
         ],
+        'incoming_receipt_grifols' => [
+            'doc_no' => 'MJG-FOR-SCM.02-002-08',
+            'effective_date' => '16 OCT 2025',
+            'revision' => '06',
+        ],
     ],
 
     /*
@@ -84,6 +89,36 @@ return [
             'sap_entry_by' => [
                 'label' => 'Entry data to the SAP System',
                 'role' => 'Supply Chain Officer',
+            ],
+        ],
+        'incoming_receipt_grifols' => [
+            'received_by' => [
+                'label' => 'Received by',
+                'role' => 'Supply Chain Officer',
+            ],
+            'inspected_by' => [
+                'label' => 'Inspected by',
+                'role' => 'QA Staff',
+            ],
+            'verified_by' => [
+                'label' => 'Verified by',
+                'role' => 'QA Supervisor',
+            ],
+            'checked_by_scm' => [
+                'label' => 'Checked by',
+                'role' => 'Supply Chain Manager',
+            ],
+            'disposition' => [
+                'label' => 'Disposition (by Grifols SCM)',
+                'role' => 'Supply Chain Manager',
+            ],
+            'sap_entry_by' => [
+                'label' => 'Entry data to the SAP System (performed by)',
+                'role' => 'Supply Chain Administration System Staff',
+            ],
+            'verified_by_whm' => [
+                'label' => 'Verified by (Warehouse Manager)',
+                'role' => 'Warehouse Manager',
             ],
         ],
     ],

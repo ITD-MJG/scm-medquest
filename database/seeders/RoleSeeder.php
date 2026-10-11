@@ -16,5 +16,8 @@ class RoleSeeder extends Seeder
         Role::create(['name' => 'QA Manager']);
         Role::create(['name' => 'QA Staff']);
         Role::create(['name' => 'Security']);
+        Role::firstOrCreate(['name' => 'QA Supervisor']);
+        Role::firstOrCreate(['name' => 'Supply Chain Administration System Staff']);
+        Role::firstOrCreate(['name' => 'Warehouse Manager']);
     }
 }

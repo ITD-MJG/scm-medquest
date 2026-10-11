@@ -44,17 +44,24 @@ class SapConnectionTester
 
     private function configFor(SapConnection $connection): array
     {
-        return [
+        $config = [
             'driver' => $connection->driver,
             'host' => $connection->host,
             'port' => $connection->port,
             'database' => $connection->database,
             'username' => $connection->username,
             'password' => $connection->password,
-            'charset' => 'utf8mb4',
-            'collation' => 'utf8mb4_unicode_ci',
             'prefix' => '',
-            'strict' => true,
         ];
+
+        if ($connection->driver === 'sqlsrv') {
+            $config['charset'] = 'utf8';
+        } else {
+            $config['charset'] = 'utf8mb4';
+            $config['collation'] = 'utf8mb4_unicode_ci';
+            $config['strict'] = true;
+        }
+
+        return $config;
     }
 }

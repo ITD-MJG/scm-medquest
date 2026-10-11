@@ -87,9 +87,9 @@ class SapConnectionTester
             'prefix' => '',
         ];
 
-        if (filled($connection->database)) {
-            $config['database'] = $connection->database;
-        }
+        // ConnectionFactory reads $config['database'] unconditionally when
+        // constructing the connection, so it must always be present.
+        $config['database'] = $connection->database ?? '';
 
         return $config;
     }

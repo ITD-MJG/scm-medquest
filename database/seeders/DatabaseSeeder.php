@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             LocationSeeder::class,
             RoomSeeder::class,
             RoomTemperatureSeeder::class,
+            DepartmentSeeder::class,
             SerialNumberSeeder::class,
             InventoryMasterDataSeeder::class,
         ]);

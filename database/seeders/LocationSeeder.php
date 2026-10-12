@@ -5,22 +5,25 @@ namespace Database\Seeders;
 use App\Models\Location;
 use Illuminate\Support\Str;
 use Illuminate\Database\Seeder;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class LocationSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        Location::create([
-            'locationId' => Str::orderedUuid(),
-            'location_name' => 'Bizpark 1',
-        ]);
-        Location::create([
-            'locationId' => Str::orderedUuid(),
-            'location_name' => 'Bizpark 2',
-        ]);
+        $locations = [
+            ['location_code' => 'BP1', 'location_name' => 'Bizpark 1'],
+            ['location_code' => 'BP2', 'location_name' => 'Bizpark 2'],
+            ['location_code' => 'A35', 'location_name' => 'Bizpark A35'],
+            ['location_code' => 'BDG', 'location_name' => 'Warehouse Bandung'],
+            ['location_code' => 'SMG', 'location_name' => 'Warehouse Semarang'],
+            ['location_code' => 'SBY', 'location_name' => 'Warehouse Surabaya'],
+        ];
+
+        foreach ($locations as $location) {
+            Location::updateOrCreate(
+                ['location_code' => $location['location_code']],
+                $location + ['locationId' => Str::orderedUuid()]
+            );
+        }
     }
 }

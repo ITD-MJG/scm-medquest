@@ -30,6 +30,22 @@ trait HasLocationBasedAccess
     }
 
     /**
+     * Get accessible location IDs restricted to Bizpark 1 & 2
+     * (used by temperature humidity/deviation resources)
+     */
+    public static function getAccessibleLocationIdsForTemperature(): array
+    {
+        $accessible = static::getAccessibleLocationIds();
+        if (empty($accessible)) {
+            return [];
+        }
+
+        $bizparkIds = Location::whereIn('location_code', ['BP1', 'BP2'])->pluck('id')->toArray();
+
+        return array_values(array_intersect($accessible, $bizparkIds));
+    }
+
+    /**
      * Get accessible location IDs for the current user
      */
     public static function getAccessibleLocationIds(): array

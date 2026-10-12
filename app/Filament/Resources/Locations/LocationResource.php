@@ -2,37 +2,34 @@
 
 namespace App\Filament\Resources\Locations;
 
-use Filament\Schemas\Schema;
-use Filament\Actions\ViewAction;
-use Filament\Actions\EditAction;
+use App\Filament\Resources\Locations\Pages\CreateLocation;
+use App\Filament\Resources\Locations\Pages\EditLocation;
+use App\Filament\Resources\Locations\Pages\ListLocations;
+use App\Filament\Resources\Locations\Pages\ViewLocation;
+use App\Models\Location;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
-use App\Filament\Resources\Locations\Pages\ListLocations;
-use App\Filament\Resources\Locations\Pages\CreateLocation;
-use App\Filament\Resources\Locations\Pages\ViewLocation;
-use App\Filament\Resources\Locations\Pages\EditLocation;
-use Filament\Forms;
-use Filament\Tables;
-use App\Models\Location;
-use Filament\Tables\Table;
-use Filament\Resources\Resource;
-use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\TextInput;
-use Illuminate\Database\Eloquent\Builder;
-use App\Filament\Resources\LocationResource\Pages;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use App\Filament\Resources\LocationResource\RelationManagers;
+use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 
 class LocationResource extends Resource
 {
     protected static ?string $model = Location::class;
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Location Management';
+    protected static string|\UnitEnum|null $navigationGroup = 'Location Management';
+
     protected static ?int $navigationSort = 2;
+
     public static function canViewAny(): bool
     {
         return auth()->user()->hasRole(['Super Admin', 'Admin']);
     }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -40,7 +37,10 @@ class LocationResource extends Resource
                 TextInput::make('location_name')
                     ->label('Location Name')
                     ->required()
-                    ->columnSpanFull()
+                    ->columnSpanFull(),
+                TextInput::make('location_code')
+                    ->label('Location Code')
+                    ->maxLength(3),
             ]);
     }
 
@@ -52,6 +52,9 @@ class LocationResource extends Resource
             ]))
             ->modifyQueryUsing(fn ($query) => $query->orderByDesc('location_name'))
             ->columns([
+                TextColumn::make('location_code')
+                    ->label('Location Code')
+                    ->searchable(),
                 TextColumn::make('location_name')
                     ->label('Location Name')
                     ->searchable(),

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Contracts\HasSignOffs;
 use App\Enums\IncomingType;
 use App\Enums\ProductStatus;
+use App\Enums\ReceiptCategory;
 use App\Enums\StorageRequirement;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -21,6 +22,7 @@ class IncomingReceipt extends Model implements HasSignOffs
     {
         return [
             'incoming_type' => IncomingType::class,
+            'category' => ReceiptCategory::class,
             'product_status' => ProductStatus::class,
             'storage_requirement' => StorageRequirement::class,
             'receipt_date' => 'date',
@@ -58,5 +60,10 @@ class IncomingReceipt extends Model implements HasSignOffs
     public function carrier(): BelongsTo
     {
         return $this->belongsTo(Carrier::class);
+    }
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
     }
 }

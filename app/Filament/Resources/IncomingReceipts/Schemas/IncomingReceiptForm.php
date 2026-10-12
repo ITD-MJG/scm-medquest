@@ -4,7 +4,9 @@ namespace App\Filament\Resources\IncomingReceipts\Schemas;
 
 use App\Enums\IncomingType;
 use App\Enums\ProductStatus;
+use App\Enums\ReceiptCategory;
 use App\Enums\StorageRequirement;
+use App\Models\Department;
 use App\Models\Product;
 use App\Models\Room;
 use App\Models\User;
@@ -14,7 +16,9 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 
 class IncomingReceiptForm
@@ -23,7 +27,7 @@ class IncomingReceiptForm
     {
         return $schema
             ->components([
-                Section::make('Receipt Identity')
+                Section::make('Receipt Identity & Parties')
                     ->schema([
                         TextInput::make('receipt_no')
                             ->label('Receipt No.')
@@ -43,14 +47,19 @@ class IncomingReceiptForm
                         Select::make('incoming_type')
                             ->label('Incoming Type')
                             ->options(IncomingType::class)
+                            ->native(false)
                             ->required(),
+                        Select::make('category')
+                            ->label('Category')
+                            ->options(fn () => collect(ReceiptCategory::cases())->mapWithKeys(fn ($c) => [$c->value => $c->label()]))
+                            ->native(false),
+                        Select::make('department_id')
+                            ->label('Department')
+                            ->options(fn () => Department::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id'))
+                            ->searchable()
+                            ->preload(),
                         TextInput::make('purchase_order_no')
                             ->label('Purchase Order No.'),
-                    ])
-                    ->columns(2),
-
-                Section::make('Parties')
-                    ->schema([
                         Select::make('supplier_id')
                             ->label('Supplier')
                             ->relationship('supplier', 'name')
@@ -62,38 +71,45 @@ class IncomingReceiptForm
                             ->searchable()
                             ->preload(),
                         TextInput::make('shipper_address')
-                            ->label('Shipper Address'),
+                            ->label('Shipper Address')
+                            ->columnSpanFull(),
                     ])
-                    ->columns(2),
+                    ->columns(4),
 
-                Section::make('Inspection')
+                Grid::make(2)
                     ->schema([
-                        Select::make('product_status')
-                            ->label('Product Status')
-                            ->options(ProductStatus::class)
-                            ->required(),
-                        Toggle::make('measured_by_device')
-                            ->label('Measured by Device'),
-                        TextInput::make('product_temp_result')
-                            ->label('Product Temp. Result')
-                            ->numeric(),
-                        TextInput::make('product_temp_record_ref')
-                            ->label('Product Temp. Record Ref.'),
-                        Select::make('storage_requirement')
-                            ->label('Storage Requirement')
-                            ->options(StorageRequirement::class),
-                        TextInput::make('remark'),
-                    ])
-                    ->columns(2),
+                        Section::make('Inspection')
+                            ->schema([
+                                Select::make('product_status')
+                                    ->label('Product Status')
+                                    ->options(ProductStatus::class)
+                                    ->required(),
+                                Toggle::make('measured_by_device')
+                                    ->label('Measured by Device')
+                                    ->live(),
+                                TextInput::make('product_temp_result')
+                                    ->label('Product Temp. Result')
+                                    ->numeric()
+                                    ->visible(fn (Get $get) => (bool) $get('measured_by_device')),
+                                TextInput::make('product_temp_record_ref')
+                                    ->label('Product Temp. Record Ref.')
+                                    ->visible(fn (Get $get) => (bool) $get('measured_by_device')),
+                                Select::make('storage_requirement')
+                                    ->label('Storage Requirement')
+                                    ->options(fn () => collect(StorageRequirement::cases())->mapWithKeys(fn ($case) => [$case->value => $case->label()])),
+                                TextInput::make('remark'),
+                            ])
+                            ->columns(2),
 
-                Section::make('Unpacking')
-                    ->schema([
-                        TimePicker::make('unpacking_start_at')
-                            ->label('Unpacking Start'),
-                        TimePicker::make('unpacking_finish_at')
-                            ->label('Unpacking Finish'),
-                    ])
-                    ->columns(2),
+                        Section::make('Unpacking')
+                            ->schema([
+                                TimePicker::make('unpacking_start_at')
+                                    ->label('Unpacking Start'),
+                                TimePicker::make('unpacking_finish_at')
+                                    ->label('Unpacking Finish'),
+                            ])
+                            ->columns(2),
+                    ]),
 
                 Repeater::make('lines')
                     ->label('Line Items')
@@ -103,7 +119,7 @@ class IncomingReceiptForm
                     ->schema([
                         Select::make('product_id')
                             ->label('Product')
-                            ->options(fn () => Product::query()->orderBy('internal_code')->pluck('internal_code', 'id'))
+                            ->options(fn () => Product::query()->orderBy('description')->pluck('description', 'id'))
                             ->searchable()
                             ->required()
                             ->afterStateUpdated(function ($state, $set) {
@@ -116,7 +132,8 @@ class IncomingReceiptForm
                                 $set('uom', $product?->uom);
                             }),
                         TextInput::make('internal_code')
-                            ->label('Internal Code'),
+                            ->label('Internal Code')
+                            ->readOnly(),
                         TextInput::make('product_description')
                             ->label('Product Description'),
                         TextInput::make('lot_no')
@@ -129,7 +146,8 @@ class IncomingReceiptForm
                             ->required(),
                         TextInput::make('uom')
                             ->label('UoM')
-                            ->required(),
+                            ->required()
+                            ->readOnly(),
                         TextInput::make('physical_packing_condition')
                             ->label('Physical Packing Condition'),
                         TextInput::make('registration_label_no')

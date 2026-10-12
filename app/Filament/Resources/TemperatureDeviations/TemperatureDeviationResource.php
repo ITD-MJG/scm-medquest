@@ -90,7 +90,7 @@ class TemperatureDeviationResource extends Resource
                             'location',
                             'location_name',
                             modifyQueryUsing: function (Builder $query) {
-                                $accessibleLocationIds = static::getAccessibleLocationIds();
+                                $accessibleLocationIds = static::getAccessibleLocationIdsForTemperature();
                                 if (! empty($accessibleLocationIds)) {
                                     $query->whereIn('id', $accessibleLocationIds);
                                 }
@@ -246,7 +246,7 @@ class TemperatureDeviationResource extends Resource
                 TextColumn::make('acknowledged_by')->label('Acknowledged by'),
             ])
             ->filters([
-                SelectFilter::make('location_id')->label('Location')->relationship('location', 'location_name')->searchable()->preload(),
+                SelectFilter::make('location_id')->label('Location')->relationship('location', 'location_name', modifyQueryUsing: fn (Builder $query) => $query->whereIn('location_code', ['BP1', 'BP2']))->searchable()->preload(),
                 SelectFilter::make('room_id')->label('Room')->relationship('room', 'room_name')->searchable()->preload(),
                 Filter::make('period')
                     ->schema([DatePicker::make('period')->label('Period')->displayFormat('M Y')->native(false)->closeOnDateSelection()])

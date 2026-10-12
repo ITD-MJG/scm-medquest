@@ -97,7 +97,7 @@ class TemperatureHumidityResource extends Resource
                                 'location',
                                 'location_name',
                                 modifyQueryUsing: function (Builder $query) {
-                                    $accessibleLocationIds = static::getAccessibleLocationIds();
+                                    $accessibleLocationIds = static::getAccessibleLocationIdsForTemperature();
                                     if (! empty($accessibleLocationIds)) {
                                         $query->whereIn('id', $accessibleLocationIds);
                                     }
@@ -955,7 +955,7 @@ class TemperatureHumidityResource extends Resource
                     ->schema([
                         Select::make('location_id')
                             ->label('Location')
-                            ->options(Location::pluck('location_name', 'id'))
+                            ->options(Location::whereIn('location_code', ['BP1', 'BP2'])->orderBy('location_name')->pluck('location_name', 'id'))
                             ->searchable()
                             ->reactive()
                             ->required(),

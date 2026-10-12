@@ -33,7 +33,8 @@ class IncomingReceiptsTable
                     ->sortable(),
                 TextColumn::make('incoming_type')
                     ->label('Incoming Type')
-                    ->badge(),
+                    ->badge()
+                    ->formatStateUsing(fn ($state) => $state->label()),
                 TextColumn::make('product_status')
                     ->label('Product Status')
                     ->badge(),

@@ -60,7 +60,7 @@ class ViewIncomingReceipt extends ViewRecord
                         TextEntry::make('location.location_name')->label('Location'),
                         TextEntry::make('receipt_date')->date()->label('Receipt Date'),
                         TextEntry::make('receipt_time')->label('Receipt Time'),
-                        TextEntry::make('incoming_type')->badge()->label('Incoming Type'),
+                        TextEntry::make('incoming_type')->badge()->label('Incoming Type')->formatStateUsing(fn ($state) => $state->label()),
                         TextEntry::make('purchase_order_no')->label('Purchase Order No.'),
                         TextEntry::make('supplier.name')->label('Supplier'),
                         TextEntry::make('carrier.name')->label('Carrier'),

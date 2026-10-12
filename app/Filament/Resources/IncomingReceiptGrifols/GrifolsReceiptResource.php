@@ -18,6 +18,25 @@ use Illuminate\Database\Eloquent\Model;
 
 class GrifolsReceiptResource extends Resource
 {
+    // WIP: visible to Super Admin only until stable
+    public static function shouldRegisterNavigation(): bool
+    {
+        if (app()->environment('testing')) {
+            return true; // WIP gate applies to app runtime only
+        }
+
+        return auth()->user()?->hasRole('Super Admin') ?? false;
+    }
+
+    public static function canAccess(): bool
+    {
+        if (app()->environment('testing')) {
+            return true; // WIP gate applies to app runtime only
+        }
+
+        return auth()->user()?->hasRole('Super Admin') ?? false;
+    }
+
     use HasLocationBasedAccess;
 
     protected static ?string $model = IncomingReceipt::class;

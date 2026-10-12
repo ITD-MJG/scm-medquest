@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\Room;
 use App\Models\User;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -33,26 +34,24 @@ class IncomingReceiptForm
                             ->label('Receipt No.')
                             ->hidden()
                             ->dehydrated(false),
-                        Select::make('location_id')
-                            ->label('Location')
-                            ->relationship('location', 'location_name')
-                            ->searchable()
-                            ->preload()
-                            ->required(),
                         DatePicker::make('receipt_date')
                             ->label('Receipt Date')
                             ->required(),
                         TimePicker::make('receipt_time')
-                            ->label('Receipt Time'),
+                            ->label('Receipt Time')
+                            ->hoursStep(1)
+                            ->minutesStep(1)
+                            ->seconds(false)
+                            ->format('H:i'),
                         Select::make('incoming_type')
                             ->label('Incoming Type')
-                            ->options(IncomingType::class)
+                            ->options(fn () => collect(IncomingType::cases())->mapWithKeys(fn ($c) => [$c->value => $c->label()]))
                             ->native(false)
                             ->required(),
-                        Select::make('category')
+                        Radio::make('category')
                             ->label('Category')
                             ->options(fn () => collect(ReceiptCategory::cases())->mapWithKeys(fn ($c) => [$c->value => $c->label()]))
-                            ->native(false),
+                            ->columns(2),
                         Select::make('department_id')
                             ->label('Department')
                             ->options(fn () => Department::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id'))
@@ -60,6 +59,12 @@ class IncomingReceiptForm
                             ->preload(),
                         TextInput::make('purchase_order_no')
                             ->label('Purchase Order No.'),
+                        Select::make('location_id')
+                            ->label('Location')
+                            ->relationship('location', 'location_name')
+                            ->searchable()
+                            ->preload()
+                            ->required(),
                         Select::make('supplier_id')
                             ->label('Supplier')
                             ->relationship('supplier', 'name')
@@ -71,18 +76,18 @@ class IncomingReceiptForm
                             ->searchable()
                             ->preload(),
                         TextInput::make('shipper_address')
-                            ->label('Shipper Address')
-                            ->columnSpanFull(),
+                            ->label('Shipper Address'),
                     ])
-                    ->columns(4),
+                    ->columns(5),
 
                 Grid::make(2)
                     ->schema([
                         Section::make('Inspection')
                             ->schema([
-                                Select::make('product_status')
+                                Radio::make('product_status')
                                     ->label('Product Status')
                                     ->options(ProductStatus::class)
+                                    ->columns(2)
                                     ->required(),
                                 Toggle::make('measured_by_device')
                                     ->label('Measured by Device')
@@ -94,9 +99,10 @@ class IncomingReceiptForm
                                 TextInput::make('product_temp_record_ref')
                                     ->label('Product Temp. Record Ref.')
                                     ->visible(fn (Get $get) => (bool) $get('measured_by_device')),
-                                Select::make('storage_requirement')
+                                Radio::make('storage_requirement')
                                     ->label('Storage Requirement')
-                                    ->options(fn () => collect(StorageRequirement::cases())->mapWithKeys(fn ($case) => [$case->value => $case->label()])),
+                                    ->options(fn () => collect(StorageRequirement::cases())->mapWithKeys(fn ($case) => [$case->value => $case->label()]))
+                                    ->columns(2),
                                 TextInput::make('remark'),
                             ])
                             ->columns(2),
@@ -104,9 +110,17 @@ class IncomingReceiptForm
                         Section::make('Unpacking')
                             ->schema([
                                 TimePicker::make('unpacking_start_at')
-                                    ->label('Unpacking Start'),
+                                    ->label('Unpacking Start')
+                                    ->hoursStep(1)
+                                    ->minutesStep(1)
+                                    ->seconds(false)
+                                    ->format('H:i'),
                                 TimePicker::make('unpacking_finish_at')
-                                    ->label('Unpacking Finish'),
+                                    ->label('Unpacking Finish')
+                                    ->hoursStep(1)
+                                    ->minutesStep(1)
+                                    ->seconds(false)
+                                    ->format('H:i'),
                             ])
                             ->columns(2),
                     ]),

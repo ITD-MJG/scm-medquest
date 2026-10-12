@@ -31,7 +31,7 @@ class IncomingReceiptForm
                     ->schema([
                         TextInput::make('receipt_no')
                             ->label('Receipt No.')
-                            ->readOnly()
+                            ->hidden()
                             ->dehydrated(false),
                         Select::make('location_id')
                             ->label('Location')

@@ -1,0 +1,34 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('incoming_receipt_lines', function (Blueprint $table) {
+            $table->dropForeign(['batch_id']);
+            $table->foreign('batch_id')->references('id')->on('batches')->cascadeOnDelete();
+        });
+
+        Schema::table('batches', function (Blueprint $table) {
+            $table->dropForeign(['product_id']);
+            $table->foreign('product_id')->references('id')->on('products')->cascadeOnDelete();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('batches', function (Blueprint $table) {
+            $table->dropForeign(['product_id']);
+            $table->foreign('product_id')->references('id')->on('products')->restrictOnDelete();
+        });
+
+        Schema::table('incoming_receipt_lines', function (Blueprint $table) {
+            $table->dropForeign(['batch_id']);
+            $table->foreign('batch_id')->references('id')->on('batches')->restrictOnDelete();
+        });
+    }
+};

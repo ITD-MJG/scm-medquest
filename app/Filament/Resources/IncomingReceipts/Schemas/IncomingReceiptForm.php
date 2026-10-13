@@ -10,7 +10,10 @@ use App\Models\Department;
 use App\Models\Product;
 use App\Models\Room;
 use App\Models\User;
+use Filament\Actions\Action;
+use Illuminate\Support\Arr;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -28,57 +31,70 @@ class IncomingReceiptForm
     {
         return $schema
             ->components([
-                Section::make('Receipt Identity & Parties')
+                Grid::make(2)
                     ->schema([
-                        TextInput::make('receipt_no')
-                            ->label('Receipt No.')
-                            ->hidden()
-                            ->dehydrated(false),
-                        DatePicker::make('receipt_date')
-                            ->label('Receipt Date')
-                            ->required(),
-                        TimePicker::make('receipt_time')
-                            ->label('Receipt Time')
-                            ->hoursStep(1)
-                            ->minutesStep(1)
-                            ->seconds(false)
-                            ->format('H:i'),
-                        Select::make('incoming_type')
-                            ->label('Incoming Type')
-                            ->options(fn () => collect(IncomingType::cases())->mapWithKeys(fn ($c) => [$c->value => $c->label()]))
-                            ->native(false)
-                            ->required(),
-                        Radio::make('category')
-                            ->label('Category')
-                            ->options(fn () => collect(ReceiptCategory::cases())->mapWithKeys(fn ($c) => [$c->value => $c->label()]))
+                        Section::make('Receipt Information')
+                            ->schema([
+                                TextInput::make('receipt_no')
+                                    ->label('Receipt No.')
+                                    ->hidden()
+                                    ->dehydrated(false),
+                                DatePicker::make('receipt_date')
+                                    ->label('Receipt Date')
+                                    ->required(),
+                                TimePicker::make('receipt_time')
+                                    ->label('Receipt Time')
+                                    ->hoursStep(1)
+                                    ->minutesStep(1)
+                                    ->seconds(false)
+                                    ->format('H:i'),
+                                Select::make('incoming_type')
+                                    ->label('Incoming Type')
+                                    ->options(fn () => collect(IncomingType::cases())->mapWithKeys(fn ($c) => [$c->value => $c->label()]))
+                                    ->native(false)
+                                    ->required(),
+                                Radio::make('category')
+                                    ->label('Category')
+                                    ->options(fn () => collect(ReceiptCategory::cases())->mapWithKeys(fn ($c) => [$c->value => $c->label()]))
+                                    ->columns(2),
+                                Select::make('department_id')
+                                    ->label('Department')
+                                    ->options(fn () => Department::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id'))
+                                    ->searchable()
+                                    ->preload(),
+                                TextInput::make('purchase_order_no')
+                                    ->label('Purchase Order No.')
+                                    ->numeric(),
+                            ])
                             ->columns(2),
-                        Select::make('department_id')
-                            ->label('Department')
-                            ->options(fn () => Department::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id'))
-                            ->searchable()
-                            ->preload(),
-                        TextInput::make('purchase_order_no')
-                            ->label('Purchase Order No.'),
-                        Select::make('location_id')
-                            ->label('Location')
-                            ->relationship('location', 'location_name')
-                            ->searchable()
-                            ->preload()
-                            ->required(),
-                        Select::make('supplier_id')
-                            ->label('Supplier')
-                            ->relationship('supplier', 'name')
-                            ->searchable()
-                            ->preload(),
-                        Select::make('carrier_id')
-                            ->label('Carrier')
-                            ->relationship('carrier', 'name')
-                            ->searchable()
-                            ->preload(),
-                        TextInput::make('shipper_address')
-                            ->label('Shipper Address'),
-                    ])
-                    ->columns(5),
+                        Section::make('Shipment Information')
+                            ->schema([
+                                Select::make('location_id')
+                                    ->label('Location')
+                                    ->relationship('location', 'location_name')
+                                    ->live()
+                                    ->searchable()
+                                    ->preload()
+                                    ->required(),
+                                TextInput::make('awb_delivery_doc_no')
+                                    ->label('AWB/Delivery Doc No.')
+                                    ->maxLength(255),
+                                Select::make('supplier_id')
+                                    ->label('Supplier')
+                                    ->relationship('supplier', 'name')
+                                    ->searchable()
+                                    ->preload(),
+                                Select::make('carrier_id')
+                                    ->label('Carrier')
+                                    ->relationship('carrier', 'name')
+                                    ->searchable()
+                                    ->preload(),
+                                TextInput::make('shipper_address')
+                                    ->label('Shipper Address')
+                                    ->columnSpanFull(),
+                            ])
+                            ->columns(2),
+                    ]),
 
                 Grid::make(2)
                     ->schema([
@@ -111,16 +127,22 @@ class IncomingReceiptForm
                             ->schema([
                                 TimePicker::make('unpacking_start_at')
                                     ->label('Unpacking Start')
+                                    ->columnSpanFull()
                                     ->hoursStep(1)
                                     ->minutesStep(1)
                                     ->seconds(false)
                                     ->format('H:i'),
                                 TimePicker::make('unpacking_finish_at')
                                     ->label('Unpacking Finish')
+                                    ->columnSpanFull()
                                     ->hoursStep(1)
                                     ->minutesStep(1)
                                     ->seconds(false)
                                     ->format('H:i'),
+                                Placeholder::make('unpacking_note')
+                                    ->label(false)
+                                    ->columnSpanFull()
+                                    ->content(new \Illuminate\Support\HtmlString('<p class="text-sm text-gray-500 dark:text-gray-400">For critical temperature products, max 15 minutes per coli</p>')),
                             ])
                             ->columns(2),
                     ]),
@@ -130,56 +152,95 @@ class IncomingReceiptForm
                     ->reorderable()
                     ->minItems(1)
                     ->addActionLabel('Add line')
-                    ->schema([
-                        Select::make('product_id')
-                            ->label('Product')
-                            ->options(fn () => Product::query()->orderBy('description')->pluck('description', 'id'))
-                            ->searchable()
-                            ->required()
-                            ->afterStateUpdated(function ($state, $set) {
-                                if (! $state) {
-                                    return;
-                                }
-                                $product = Product::find($state);
-                                $set('internal_code', $product?->internal_code);
-                                $set('product_description', $product?->description);
-                                $set('uom', $product?->uom);
+                    ->extraItemActions([
+                        Action::make('registrationLabel')
+                            ->label('Registration Label')
+                            ->icon('heroicon-o-pencil-square')
+                            ->fillForm(fn (Repeater $component, array $arguments) => Arr::only(
+                                $component->getRawItemState($arguments['item']),
+                                ['registration_label_no', 'registration_label_qa_by'],
+                            ))
+                            ->form([
+                                TextInput::make('registration_label_no')
+                                    ->label('Registration Label No.'),
+                                Select::make('registration_label_qa_by')
+                                    ->label('QA By')
+                                    ->options(fn () => User::query()->orderBy('name')->pluck('name', 'id'))
+                                    ->searchable(),
+                            ])
+                            ->action(function (array $data, Repeater $component, array $arguments): void {
+                                $state = $component->getState();
+                                $state[$arguments['item']] = array_merge($state[$arguments['item']] ?? [], $data);
+                                $component->state($state);
                             }),
-                        TextInput::make('internal_code')
-                            ->label('Internal Code')
-                            ->readOnly(),
-                        TextInput::make('product_description')
-                            ->label('Product Description'),
-                        TextInput::make('lot_no')
-                            ->label('Lot No.'),
-                        DatePicker::make('expiry_date')
-                            ->label('Expiry Date'),
-                        TextInput::make('quantity')
-                            ->label('Quantity')
-                            ->numeric()
-                            ->required(),
-                        TextInput::make('uom')
-                            ->label('UoM')
-                            ->required()
-                            ->readOnly(),
-                        TextInput::make('physical_packing_condition')
-                            ->label('Physical Packing Condition'),
-                        TextInput::make('registration_label_no')
-                            ->label('Registration Label No.'),
-                        Select::make('registration_label_qa_by')
-                            ->label('Registration Label QA By')
-                            ->options(fn () => User::query()->orderBy('name')->pluck('name', 'id'))
-                            ->searchable(),
-                        TextInput::make('function_test_result')
-                            ->label('Function Test Result'),
-                        TextInput::make('function_test_by')
-                            ->label('Function Test By'),
-                        Select::make('room_id')
-                            ->label('Room')
-                            ->options(fn () => Room::query()->orderBy('room_name')->pluck('room_name', 'id'))
-                            ->searchable(),
+                        Action::make('functionTest')
+                            ->label('Function Test')
+                            ->icon('heroicon-o-beaker')
+                            ->fillForm(fn (Repeater $component, array $arguments) => Arr::only(
+                                $component->getRawItemState($arguments['item']),
+                                ['function_test_result', 'function_test_by'],
+                            ))
+                            ->form([
+                                TextInput::make('function_test_result')
+                                    ->label('Function Test Result'),
+                                TextInput::make('function_test_by')
+                                    ->label('Test By'),
+                            ])
+                            ->action(function (array $data, Repeater $component, array $arguments): void {
+                                $state = $component->getState();
+                                $state[$arguments['item']] = array_merge($state[$arguments['item']] ?? [], $data);
+                                $component->state($state);
+                            }),
                     ])
-                    ->columns(3),
+                    ->schema([
+                        Grid::make(6)
+                            ->schema([
+                                Select::make('product_id')
+                                    ->label('Product')
+                                    ->options(fn () => Product::query()->orderBy('description')->pluck('description', 'id'))
+                                    ->searchable()
+                                    ->live()
+                                    ->required()
+                                    ->afterStateUpdated(function ($state, $set) {
+                                        if (! $state) {
+                                            $set('internal_code', null);
+                                            $set('uom', null);
+
+                                            return;
+                                        }
+                                        $product = Product::find($state);
+                                        $set('internal_code', $product?->internal_code);
+                                        $set('uom', $product?->uom);
+                                    }),
+                                TextInput::make('internal_code')
+                                    ->label('Internal Code')
+                                    ->readOnly(),
+                                TextInput::make('lot_no')
+                                    ->label('Lot/Batch/Serial No.'),
+                                DatePicker::make('expiry_date')
+                                    ->label('Expiry Date'),
+                                TextInput::make('quantity')
+                                    ->label('Quantity')
+                                    ->numeric()
+                                    ->required(),
+                                TextInput::make('uom')
+                                    ->label('UoM')
+                                    ->required()
+                                    ->readOnly(),
+                            ]),
+                        Grid::make(2)
+                            ->schema([
+                                TextInput::make('physical_packing_condition')
+                                    ->label('Physical Packing Condition'),
+                                Select::make('room_id')
+                                    ->label('Room')
+                                    ->options(fn (Get $get) => Room::query()
+                                        ->where('location_id', $get('../../location_id'))
+                                        ->orderBy('room_name')
+                                        ->pluck('room_name', 'id'))
+                                    ->searchable(),
+                            ]),
+                    ]),
             ])
             ->columns(1);
     }

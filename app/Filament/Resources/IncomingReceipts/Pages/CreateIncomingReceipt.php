@@ -79,7 +79,7 @@ class CreateIncomingReceipt extends CreateRecord
                     'batch_id' => $batch->id,
                     'line_no' => $i + 1,
                     'internal_code' => $line['internal_code'],
-                    'product_description' => $line['product_description'],
+                    'product_description' => Product::find($line['product_id'])?->description,
                     'lot_no' => $line['lot_no'],
                     'expiry_date' => $line['expiry_date'] ?: null,
                     'quantity' => $line['quantity'],

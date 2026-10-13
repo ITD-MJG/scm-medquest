@@ -58,7 +58,7 @@ class ViewIncomingReceipt extends ViewRecord
                     ->schema([
                         TextEntry::make('receipt_no')->label('Receipt No.'),
                         TextEntry::make('location.location_name')->label('Location'),
-                        TextEntry::make('receipt_date')->date()->label('Receipt Date'),
+                        TextEntry::make('receipt_date')->formatStateUsing(fn ($state) => strtoupper(\Carbon\Carbon::parse($state)->format('d M Y')))->label('Receipt Date'),
                         TextEntry::make('receipt_time')->label('Receipt Time'),
                         TextEntry::make('incoming_type')->badge()->label('Incoming Type')->formatStateUsing(fn ($state) => $state->label()),
                         TextEntry::make('purchase_order_no')->label('Purchase Order No.'),
@@ -70,16 +70,16 @@ class ViewIncomingReceipt extends ViewRecord
 
                 Section::make('Inspection')
                     ->schema([
-                        TextEntry::make('product_status')->badge()->label('Product Status'),
+                        TextEntry::make('product_status')->badge()->label('Product Status')->formatStateUsing(fn ($state) => $state->label()),
                         TextEntry::make('measured_by_device')
                             ->label('Measured by Device')
                             ->formatStateUsing(fn ($state) => $state ? 'Yes' : 'No'),
                         TextEntry::make('product_temp_result')->label('Product Temp. Result'),
                         TextEntry::make('product_temp_record_ref')->label('Product Temp. Record Ref.'),
-                        TextEntry::make('storage_requirement')->label('Storage Requirement'),
+                        TextEntry::make('storage_requirement')->label('Storage Requirement')->formatStateUsing(fn ($state) => $state->label()),
                         TextEntry::make('remark')->label('Remark'),
-                        TextEntry::make('unpacking_start_at')->label('Unpacking Start'),
-                        TextEntry::make('unpacking_finish_at')->label('Unpacking Finish'),
+                        TextEntry::make('unpacking_start_at')->formatStateUsing(fn ($state) => strtoupper(\Carbon\Carbon::parse($state)->format('d M Y H:i')))->label('Unpacking Start'),
+                        TextEntry::make('unpacking_finish_at')->formatStateUsing(fn ($state) => strtoupper(\Carbon\Carbon::parse($state)->format('d M Y H:i')))->label('Unpacking Finish'),
                     ])
                     ->columns(2),
 
@@ -91,7 +91,7 @@ class ViewIncomingReceipt extends ViewRecord
                                 TextEntry::make('product.internal_code')->label('Internal Code'),
                                 TextEntry::make('product.description')->label('Description'),
                                 TextEntry::make('lot_no')->label('Lot No.'),
-                                TextEntry::make('expiry_date')->date()->label('Expiry Date'),
+                                TextEntry::make('expiry_date')->formatStateUsing(fn ($state) => strtoupper(\Carbon\Carbon::parse($state)->format('d M Y')))->label('Expiry Date'),
                                 TextEntry::make('quantity')->label('Quantity'),
                                 TextEntry::make('uom')->label('UoM'),
                                 TextEntry::make('physical_packing_condition')->label('Packing Condition'),
@@ -106,7 +106,7 @@ class ViewIncomingReceipt extends ViewRecord
                             ->schema([
                                 TextEntry::make('step')->label('Step'),
                                 TextEntry::make('signer_name')->label('Signed by'),
-                                TextEntry::make('signed_at')->dateTime()->label('Signed at'),
+                                TextEntry::make('signed_at')->formatStateUsing(fn ($state) => strtoupper(\Carbon\Carbon::parse($state)->format('d M Y H:i')))->label('Signed at'),
                             ])
                             ->columns(3)
                             ->visible(fn ($record): bool => $record->signoffs()->exists()),

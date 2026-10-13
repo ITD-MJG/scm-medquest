@@ -23,6 +23,10 @@ class IncomingReceiptsTable
                     ->label('Receipt No.')
                     ->sortable()
                     ->searchable(),
+                    TextColumn::make('awb_delivery_doc_no')
+                        ->label('AWB/Delivery Doc No.')
+                        ->sortable()
+                        ->searchable(),
                 TextColumn::make('location.location_name')
                     ->label('Location')
                     ->sortable()

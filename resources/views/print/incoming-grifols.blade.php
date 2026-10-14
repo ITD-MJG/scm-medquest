@@ -44,12 +44,18 @@
 <body>
     @php
         $meta = config('documents.form_metadata.incoming_receipt_grifols');
-        $steps = config('documents.signoff_steps.incoming_receipt_grifols');
+        $steps = app(App\Services\SignOffService::class)->stepsFor('incoming_receipt_grifols');
         $signoffs = $receipt->signoffs->keyBy('step');
 
-        $row1Steps = ['received_by', 'inspected_by', 'verified_by', 'checked_by_scm'];
-        $row2Steps = ['disposition', 'sap_entry_by', 'verified_by_whm'];
-
+        // Flow-driven steps keep the print grid's fixed slot positions; slots are
+        // identified by their original config key order (legacy names kept for layout).
+        $slotKeys = ['received_by', 'inspected_by', 'verified_by', 'checked_by_scm', 'disposition', 'sap_entry_by', 'verified_by_whm'];
+        $row1Slots = array_slice($slotKeys, 0, 4);
+        $row2Slots = array_slice($slotKeys, 4);
+        $stepKeys = array_keys($steps); // flow sequences in order
+        $slotByStepKey = array_combine($stepKeys, array_pad([], count($stepKeys), null));
+        foreach ($stepKeys as $i => $k) { $slotByStepKey[$k] = $slotKeys[$i] ?? $k; }
+        $signoffs = $receipt->signoffs->keyBy(fn ($s) => isset($slotByStepKey[$s->step]) ? $slotByStepKey[$s->step] : $s->step);
         $displayDate = function ($value) {
             return $value ? strtoupper(\Carbon\Carbon::parse($value)->format('d M Y')) : 'N/A';
         };
@@ -196,7 +202,7 @@
         <table class="table table-bordered">
             <tbody>
                 <tr>
-                    @foreach ($row1Steps as $stepKey)
+                    @foreach ($row1Slots as $slotKey) @php $stepKey = array_search($slotKey, $slotByStepKey) ?: $slotKey; @endphp
                         <td style="width: 25%; height: 70px; font-size: 10px;">
                             <strong>{{ $steps[$stepKey]['label'] }}</strong><br>
                             ({{ $steps[$stepKey]['role'] }})<br><br>
@@ -205,11 +211,11 @@
                     @endforeach
                 </tr>
                 <tr>
-                    @foreach ($row2Steps as $stepKey)
-                        <td style="width: {{ $stepKey === 'disposition' ? '34%' : '33%' }}; height: 70px; font-size: 10px;">
+                    @foreach ($row2Slots as $slotKey) @php $stepKey = array_search($slotKey, $slotByStepKey) ?: $slotKey; @endphp
+                        <td style="width: {{ $slotKey === 'disposition' ? '34%' : '33%' }}; height: 70px; font-size: 10px;">
                             <strong>{{ $steps[$stepKey]['label'] }}</strong><br>
                             ({{ $steps[$stepKey]['role'] }})<br>
-                            @if ($stepKey === 'disposition')
+                            @if ($slotKey === 'disposition')
                                 {{ $receipt->disposition ?? 'N/A' }}<br><br>
                             @else
                                 <br>

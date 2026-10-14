@@ -15,18 +15,35 @@ use RuntimeException;
 /**
  * Ordered, role-gated sign-off engine shared by every controlled form.
  *
- * A step may only be signed once, in configured order, by the configured role (or
- * a Super Admin). The ordering rules live here alone so all forms agree.
+ * When the document type has an active ApprovalFlow, the DB-driven
+ * ApprovalFlowService decides everything and this class delegates. Otherwise
+ * the ordering rules come from config and live here alone so all forms agree.
  */
 final class SignOffService
 {
+    public function __construct(private readonly ApprovalFlowService $flows)
+    {
+    }
+
     /**
-     * The ordered step definitions for a document type.
+     * The ordered step definitions for a document type: the active flow's
+     * steps keyed by sequence, or the legacy config steps.
      *
      * @return array<string, array{label: string, role: string}>
      */
     public function stepsFor(string $documentType): array
     {
+        $flow = $this->flows->resolveFor($documentType);
+
+        if ($flow !== null && $flow->steps->isNotEmpty()) {
+            return $flow->steps
+                ->mapWithKeys(fn ($step) => [(string) $step->sequence => [
+                    'label' => $step->label,
+                    'role' => $step->role_name,
+                ]])
+                ->all();
+        }
+
         return config("documents.signoff_steps.{$documentType}", []);
     }
 
@@ -43,9 +60,15 @@ final class SignOffService
             throw new RuntimeException('A signed-in user is required to record a sign-off.');
         }
 
+        if ($this->flows->resolveFor($document->documentType()) !== null) {
+            return $this->flows->sign($document, $actor);
+        }
+
         $steps = $this->stepsFor($document->documentType());
 
-        if (! array_key_exists($step, $steps)) {
+        $config = $steps[$step] ?? $steps[(int) $step] ?? null;
+
+        if ($config === null) {
             throw new InvalidArgumentException("Unknown sign-off step [{$step}] for document type [{$document->documentType()}].");
         }
 
@@ -62,7 +85,7 @@ final class SignOffService
         }
 
         if (! $this->canSign($document, $step, $actor)) {
-            throw SignOffException::notPermitted($step, $steps[$step]['role']);
+            throw SignOffException::notPermitted($step, $config['role']);
         }
 
         $signedAt = now('Asia/Jakarta');
@@ -70,7 +93,7 @@ final class SignOffService
         return $document->signoffs()->create([
             'document_type' => $document->documentType(),
             'step' => $step,
-            'role_required' => $steps[$step]['role'],
+            'role_required' => $config['role'],
             'user_id' => $actor->id,
             'signer_name' => SignatureFormatter::format($actor, $signedAt),
             'signed_at' => $signedAt,
@@ -83,13 +106,24 @@ final class SignOffService
      */
     public function canSign(HasSignOffs $document, string $step, User $user): bool
     {
+        $flow = $this->flows->resolveFor($document->documentType());
+
+        if ($flow !== null) {
+            return $this->stepsFor($document->documentType())[$step] ?? false
+                ? $this->flows->canSignCurrent($document, $user)
+                    && $this->currentStepKey($document) === $step
+                : false;
+        }
+
         $steps = $this->stepsFor($document->documentType());
 
-        if (! array_key_exists($step, $steps)) {
+        $config = $steps[$step] ?? $steps[(int) $step] ?? null;
+
+        if ($config === null) {
             return false;
         }
 
-        if (! $user->hasAnyRole([$steps[$step]['role'], 'Super Admin'])) {
+        if (! $user->hasAnyRole([$config['role'], 'Super Admin'])) {
             return false;
         }
 
@@ -104,8 +138,8 @@ final class SignOffService
         $signed = $this->signedSteps($document);
 
         foreach (array_keys($this->stepsFor($document->documentType())) as $step) {
-            if (! in_array($step, $signed, true)) {
-                return $step;
+            if (! in_array((string) $step, $signed, true)) {
+                return (string) $step;
             }
         }
 
@@ -115,6 +149,16 @@ final class SignOffService
     public function isComplete(HasSignOffs $document): bool
     {
         return $this->nextPendingStep($document) === null;
+    }
+
+    /**
+     * The flow step key the document is currently waiting on, or null.
+     */
+    private function currentStepKey(HasSignOffs $document): ?string
+    {
+        $step = $this->flows->currentStepFor($document);
+
+        return $step === null ? null : (string) $step->sequence;
     }
 
     /**
@@ -134,11 +178,11 @@ final class SignOffService
     private function firstUnsignedPrerequisite(array $steps, string $step, array $signed): ?string
     {
         foreach (array_keys($steps) as $key) {
-            if ($key === $step) {
+            if ((string) $key === $step) {
                 return null;
             }
 
-            if (! in_array($key, $signed, true)) {
+            if (! in_array((string) $key, $signed, true)) {
                 return $key;
             }
         }

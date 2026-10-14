@@ -120,7 +120,7 @@
 <body>
     @php
         $meta = config('documents.form_metadata.incoming_receipt');
-        $steps = config('documents.signoff_steps.incoming_receipt');
+        $steps = app(App\Services\SignOffService::class)->stepsFor('incoming_receipt');
         $signoffs = $receipt->signoffs->keyBy('step');
 
         $displayDate = function ($value) {

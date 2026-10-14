@@ -32,7 +32,7 @@ class ViewGrifolsReceipt extends ViewRecord
     {
         $service = app(SignOffService::class);
 
-        return collect(config('documents.signoff_steps.incoming_receipt_grifols', []))
+        return collect($service->stepsFor($this->getRecord()->documentType()))
             ->map(fn (array $config, string $step): Action => Action::make("sign_{$step}")
                 ->label($config['label'])
                 ->requiresConfirmation()

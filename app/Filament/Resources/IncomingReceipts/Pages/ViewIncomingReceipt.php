@@ -38,7 +38,7 @@ class ViewIncomingReceipt extends ViewRecord
     {
         $service = app(SignOffService::class);
 
-        return collect(config('documents.signoff_steps.incoming_receipt', []))
+        return collect($service->stepsFor($this->getRecord()->documentType()))
             ->map(fn (array $config, string $step): Action => Action::make("sign_{$step}")
                 ->label($config['label'])
                 ->requiresConfirmation()

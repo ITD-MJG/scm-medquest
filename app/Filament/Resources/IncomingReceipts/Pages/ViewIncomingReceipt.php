@@ -24,6 +24,12 @@ class ViewIncomingReceipt extends ViewRecord
             EditAction::make()
                 ->visible(fn (): bool => $this->getRecord()->signoffs()->count() === 0
                     || auth()->user()->hasRole('Super Admin')),
+            Action::make('preview_pdf')
+                ->label('Preview PDF')
+                ->icon('heroicon-o-document-arrow-down')
+                ->color('gray')
+                ->url(fn (): string => route('incoming-receipts.print', ['record' => $this->getRecord()]))
+                ->openUrlInNewTab(),
             ...$this->getSignOffActions(),
         ];
     }

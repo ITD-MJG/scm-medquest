@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Services\Sap;
 
 final readonly class SapImportResult
@@ -11,4 +9,9 @@ final readonly class SapImportResult
         public int $updated = 0,
         public int $skipped = 0,
     ) {}
+
+    public function isEmpty(): bool
+    {
+        return $this->created === 0 && $this->updated === 0 && $this->skipped === 0;
+    }
 }

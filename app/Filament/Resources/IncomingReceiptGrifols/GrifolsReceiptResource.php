@@ -43,7 +43,7 @@ class GrifolsReceiptResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = 'Incoming';
 
-    protected static ?string $navigationLabel = 'Incoming Receipts Grifols';
+    protected static ?string $navigationLabel = 'Incoming Receipts (Grifols)';
 
     protected static ?string $slug = 'incoming-receipts-grifols';
 

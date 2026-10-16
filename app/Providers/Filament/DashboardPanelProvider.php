@@ -109,9 +109,6 @@ class DashboardPanelProvider extends PanelProvider
                     ->label('Temperature Deviation')
                     ->collapsed(true),
                 NavigationGroup::make()
-                    ->label('Location Management')
-                    ->collapsed(true),
-                NavigationGroup::make()
                     ->label('Master Data')
                     ->collapsed(true),
                 NavigationGroup::make()

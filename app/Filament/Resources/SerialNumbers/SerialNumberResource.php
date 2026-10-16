@@ -25,8 +25,8 @@ class SerialNumberResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-hashtag';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Location Management';
-    protected static ?int $navigationSort = 4;
+    protected static string|\UnitEnum|null $navigationGroup = 'Master Data';
+    protected static ?int $navigationSort = 9;
     public static function canViewAny(): bool
     {
         return auth()->user()->hasRole(['Super Admin', 'Admin']);

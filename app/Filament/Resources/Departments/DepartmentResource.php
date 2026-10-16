@@ -23,9 +23,9 @@ class DepartmentResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = null;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Location Management';
+    protected static string|\UnitEnum|null $navigationGroup = 'Master Data';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 7;
 
     public static function canViewAny(): bool
     {

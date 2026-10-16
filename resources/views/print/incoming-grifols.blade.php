@@ -60,6 +60,21 @@
             return $value ? strtoupper(\Carbon\Carbon::parse($value)->format('d M Y')) : 'N/A';
         };
 
+
+        // Form rev 06 renders checkbox groups instead of free-text enum values.
+        $check = fn (bool $on) => $on ? '&#9745;' : '&#9744;';
+        $incomingTypeChecks = [
+            'New Inventory (PO)' => ($receipt->incoming_type?->value ?? $receipt->incoming_type) === 'new_inventory_po',
+            'New Inventory (Non PO)' => ($receipt->incoming_type?->value ?? $receipt->incoming_type) === 'new_inventory_non_po',
+            'Return' => ($receipt->incoming_type?->value ?? $receipt->incoming_type) === 'return',
+            'Others' => ($receipt->incoming_type?->value ?? $receipt->incoming_type) === 'other',
+        ];
+        $storageChecks = [
+            'Ambient (15°C to 30°C)' => ($receipt->storage_requirement?->value ?? $receipt->storage_requirement) === '15_30',
+            'Refrigerated (2°C to 8°C)' => ($receipt->storage_requirement?->value ?? $receipt->storage_requirement) === '2_8',
+            'Frozen (-35°C to -15°C)' => in_array(($receipt->storage_requirement?->value ?? $receipt->storage_requirement), ['minus35_minus15', 'minus25_minus10']),
+            'Controlled Room' => ($receipt->storage_requirement?->value ?? $receipt->storage_requirement) === null,
+        ];
         $displayLot = function ($value) {
             return ($value === null || trim((string) $value) === '') ? 'N/A' : $value;
         };
@@ -116,7 +131,7 @@
                         <p class="mb-0" style="font-size: 11px;">
                             :&ensp;{{ $receipt->receipt_date ? strtoupper(\Carbon\Carbon::parse($receipt->receipt_date)->format('d M Y H:i')) : '-' }}</p>
                         <p class="mb-0" style="font-size: 11px;">:&ensp;{{ $receipt->supplier->name ?? '-' }}</p>
-                        <p class="mb-0" style="font-size: 11px;">:&ensp;{{ $receipt->incoming_type?->value ?? $receipt->incoming_type ?? '-' }}</p>
+                        <p class="mb-0" style="font-size: 11px;">:&ensp;@foreach($incomingTypeChecks as $label => $on){!! $check($on) !!} {{ $label }} &ensp;@endforeach</p>
                     </div>
                 </div>
             </div>
@@ -133,10 +148,10 @@
                         <p class="mb-0" style="font-size: 11px;">Remark</p>
                     </div>
                     <div class="col-8">
-                        <p class="mb-0" style="font-size: 11px;">:&ensp;{{ $receipt->storage_requirement ?? '-' }}</p>
+                        <p class="mb-0" style="font-size: 11px;">:&ensp;@foreach($storageChecks as $label => $on){!! $check($on) !!} {{ $label }} &ensp;@endforeach</p>
                         <p class="mb-0" style="font-size: 11px;">
                             :&ensp;{{ $receipt->unpacking_start_at ?? '-' }} / {{ $receipt->unpacking_finish_at ?? '-' }}</p>
-                        <p class="mb-0" style="font-size: 11px;">:&ensp;{{ $receipt->product_temp_result ?? '-' }}</p>
+                        <p class="mb-0" style="font-size: 11px;">:&ensp;{!! $check((bool) $receipt->measured_by_device) !!} Temperature measured by Device (Y/N) &ensp; Product Temperature Result: {{ $receipt->product_temp_result ?? '-' }}</p>
                         <p class="mb-0" style="font-size: 11px;">:&ensp;{{ $receipt->product_status?->value ?? $receipt->product_status ?? '-' }}</p>
                         <p class="mb-0" style="font-size: 11px;">:&ensp;{{ $receipt->location->location_name ?? '-' }}</p>
                         <p class="mb-0" style="font-size: 11px;">:&ensp;{{ $receipt->remark ?? '-' }}</p>

@@ -23,7 +23,7 @@
 
         .table th,
         .table td {
-            padding: 0.3rem;
+            padding: 0.15rem;
             vertical-align: middle;
             border: 1px solid black !important;
             word-wrap: break-word;
@@ -44,7 +44,7 @@
 
         .header-container {
             border: 1px solid black;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             min-height: 60px;
         }
 
@@ -53,12 +53,12 @@
         }
 
         .header-section .row.mb-2 {
-            margin-bottom: 12px !important;
+            margin-bottom: 6px !important;
         }
 
         .footer-section {
             page-break-inside: avoid;
-            margin-top: 15px;
+            margin-top: 8px;
         }
 
         .border-black {
@@ -129,9 +129,9 @@ $renderGroups =
                                     <p class="mb-0" style="font-size: 11px;">Page No.</p>
                                 </div>
                                 <div class="col-7">
-                                    <p class="mb-0" style="font-size: 11px;">:&ensp;MJG-FOR-SCM.02.002-01</p>
+                                    <p class="mb-0" style="font-size: 11px;">:&ensp;MJG-FOR-SCM.02-002-01</p>
                                     <p class="mb-0" style="font-size: 11px;">:&ensp;11 JUN 2023</p>
-                                    <p class="mb-0" style="font-size: 11px;">:&ensp;08</p>
+                                    <p class="mb-0" style="font-size: 11px;">:&ensp;09</p>
                                     <p class="mb-0" style="font-size: 11px;">:&ensp;@pageNumber of @totalPages</p>
                                 </div>
                             </div>
@@ -146,7 +146,7 @@ $renderGroups =
                     </div>
 
                     <div class="row mb-2">
-                        <div class="col-6 border border-black border-end-0 py-1">
+                        <div class="col-7 border border-black border-end-0 py-1">
                             <div class="row">
                                 <div class="col-5">
                                     <p class="mb-0" style="font-size: 12px;">Period (<i>Periode</i>)</p>
@@ -166,36 +166,38 @@ $renderGroups =
                                 </div>
                             </div>
                         </div>
-                        <div class="col-3 border-top border-bottom border-black py-1 px-2">
+                        <div class="col-3 border-top border-bottom border-black border-end-0 py-1 px-2">
                             <p class="mb-0" style="font-size: 11px;">**) Initial name and date (<i>Inisial nama dan tanggal</i>)</p>
                         </div>
-                        <div class="col-3 border border-black border-start-0 py-1 px-1">
-                            <p class="fw-bolder text-center mb-0" style="font-size: 9px;">Specifically for Grifols Diagnostics products, immediately report to QA and Grifols Diagnostics principals if there is a temperature deviation <br><br>
-                                (Khusus produk Grifols Diagnostics, segera laporkan ke QA dan prinsipal Grifols Diagnostics jika terjadi penyimpangan suhu)</p>
+                        <div class="col-2 border border-black py-1 px-1">
+                            <p class="fw-bolder text-center align-center mb-0" style="font-size: 8px;">Specifically for Grifols Diagnostics products, immediately report to QA and Grifols Diagnostics principals if there is a temperature deviation</p>
                         </div>
                     </div>
 
                     <div class="row mb-2">
-                        <div class="col-12 border border-black py-1">
+                        <div class="col-10 border border-black border-end-0 py-1">
                             <div class="row">
                                 <div class="col-3">
                                     <p class="mb-0" style="font-size: 12px;">Reason of deviations *) <br> (<i>Alasan
                                             penyimpangan *</i>)</p>
                                 </div>
                                 <div class="col-9">
-                                    <p class="mb-0" style="font-size: 11px;">:&ensp; A.&nbsp;There were many people in the
+                                    <p class="mb-0" style="font-size: 10px;">:&ensp; A.&nbsp;There were many people in the
                                         room, so that the room temperature rised (<i>Banyak orang didalam ruangan, sehingga
                                             suhu ruangan meningkat</i>)</p>
-                                    <p class="mb-0" style="font-size: 11px;">&ensp;&ensp;B.&nbsp;There were activities
+                                    <p class="mb-0" style="font-size: 10px;">&ensp;&ensp;B.&nbsp;There were activities
                                         related to packaging / moving goods (<i>Sedang ada aktivitas terkait dengan
                                             pengemasan / pemindahan barang</i>)</p>
-                                    <p class="mb-0" style="font-size: 11px;">&ensp;&ensp;C.&nbsp;Other, please fill in with a more appropriate reason (<i>Lain-lain, silakan isi dengan alasan yang lebih sesuai</i>)</p>
+                                    <p class="mb-0" style="font-size: 10px;">&ensp;&ensp;C.&nbsp;Other, please fill in with a more appropriate reason (<i>Lain-lain, silakan isi dengan alasan yang lebih sesuai</i>)</p>
                                 </div>
                             </div>
                         </div>
+                        <div class="col-2 border border-black py-1 px-1">
+                            <p class="fw-bolder text-center align-center mb-0" style="font-size: 8px;">(<i>Khusus produk Grifols Diagnostics, segera laporkan ke QA dan prinsipal Grifols Diagnostics jika terjadi penyimpangan suhu</i>)</p>
+                        </div>
                     </div>
 
-                    <div class="row mb-2">
+                    <div class="row">
                         <div class="col-12 border border-black py-1 bg-light">
                             <p class="mb-0 fw-bold text-center text-uppercase" style="font-size: 14px">Jika Terjadi
                                 Penyimpangan Suhu Laporkan Segera ke Quality Assurance (QA)</p>
@@ -245,7 +247,7 @@ $renderGroups =
     
                             @php
                                 $currentRowCount = count($roomDeviations);
-                                $minRows = 10;
+                                $minRows = 6;
                             @endphp
     
                             @for ($i = $currentRowCount + 1; $i <= $minRows; $i++)

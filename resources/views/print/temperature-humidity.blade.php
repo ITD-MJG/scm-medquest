@@ -88,9 +88,9 @@ $renderGroups = isset($groupedTempHumidity) && $groupedTempHumidity->count() > 0
                                 <p class="mb-0" style="font-size: 11px;">Page No.</p>
                             </div>
                             <div class="col-7">
-                                <p class="mb-0" style="font-size: 11px;">:&ensp;MJG-FOR-SCM.02.002-01</p>
+                                <p class="mb-0" style="font-size: 11px;">:&ensp;MJG-FOR-SCM.02-002-01</p>
                                 <p class="mb-0" style="font-size: 11px;">:&ensp;12 JUN 2023</p>
-                                <p class="mb-0" style="font-size: 11px;">:&ensp;09</p>
+                                <p class="mb-0" style="font-size: 11px;">:&ensp;10</p>
                                 <p class="mb-0" style="font-size: 11px;">:&ensp;@pageNumber of @totalPages</p>
                             </div>
                         </div>
@@ -144,7 +144,7 @@ $renderGroups = isset($groupedTempHumidity) && $groupedTempHumidity->count() > 0
                         </div>
                     </div>
                     <div class="col-5 pe-0 border border-black py-1">
-                        <p class="mb-0" style="font-size: 11px;">*) Initial name and date (<i>Inisial nama dan tanggal</i>)</p>
+                        <p class="mb-0" style="font-size: 11px;">*) Initial name and date (<i>Inisial nama dan tanggal</i>) or Name for Security (<i>Nama untuk Sekuriti</i>)</p>
                     </div>
                 </div>
             </div>

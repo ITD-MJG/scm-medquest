@@ -105,6 +105,7 @@ Route::get('/temperature-deviations/bulk-export', function () {
         ->format('A4')
         ->margins(3, 3, 3, 3)
         ->landscape()
+        ->scale(0.80)
         ->showBackground()
         ->pdf();
 

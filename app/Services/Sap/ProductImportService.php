@@ -100,7 +100,7 @@ final class ProductImportService
                 )),
             );
         } else {
-            throw new \RuntimeException('No active SAP HANA connection configured. Create one in System Administration > SAP Connections.');
+            throw new \RuntimeException('No active SAP HANA connection configured. Create one in Admin Settings > SAP Connections.');
         }
 
         if ($rows === []) {
@@ -173,7 +173,7 @@ final class ProductImportService
                 ->all();
         }
 
-        $connection ?? throw new \RuntimeException('No active SAP HANA connection configured. Create one in System Administration > SAP Connections.');
+        $connection ?? throw new \RuntimeException('No active SAP HANA connection configured. Create one in Admin Settings > SAP Connections.');
 
         return (new SapHanaReader($connection, $schema))->readPrincipals();
     }

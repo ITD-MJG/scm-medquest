@@ -6,7 +6,7 @@ use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class)->in('Feature');
 uses(TestCase::class)->in('Unit');
-uses(RefreshDatabase::class)->in('Unit/Models', 'Unit/Services');
+uses(RefreshDatabase::class)->in('Unit/Models', 'Unit/Services', 'Unit/Mcp');
 
 // One shared role set for tests. Scope is Unit/Services only: a Feature-scope hook runs
 // before each file's own beforeEach, so the pre-existing inline Role::create() calls in

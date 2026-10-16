@@ -24,6 +24,7 @@ class RoleResource extends Resource
 {
     protected static ?string $model = Role::class;
     protected static string | \UnitEnum | null $navigationGroup = 'Admin Settings';
+    protected static ?int $navigationSort = 2;
     public static function canViewAny(): bool
     {
         return auth()->user()->hasRole(['Super Admin']);

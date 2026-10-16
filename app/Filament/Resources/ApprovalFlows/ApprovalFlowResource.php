@@ -3,8 +3,6 @@
 namespace App\Filament\Resources\ApprovalFlows;
 
 use App\Models\ApprovalFlow;
-use App\Models\ApprovalFlowStep;
-use Filament\Forms\Components\Repeater;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
@@ -17,7 +15,6 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
-use Spatie\Permission\Models\Role;
 
 class ApprovalFlowResource extends Resource
 {
@@ -25,7 +22,7 @@ class ApprovalFlowResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-check-badge';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'System Administration';
+    protected static string|\UnitEnum|null $navigationGroup = 'Admin Settings';
 
     protected static ?string $navigationLabel = 'Approval Flows';
 
@@ -60,31 +57,6 @@ class ApprovalFlowResource extends Resource
                     ])
                     ->columns(2),
 
-                Section::make('Approval Steps')
-                    ->description('Ordered from first to last. Each step must be signed in sequence by a user holding the role (or a Super Admin).')
-                    ->schema([
-                        Repeater::make('steps')
-                            ->relationship('steps')
-                            ->label('')
-                            ->orderColumn('sequence')
-                            ->reorderable()
-                            ->collapsible()
-                            ->defaultItems(0)
-                            ->schema([
-                                TextInput::make('label')
-                                    ->required()
-                                    ->maxLength(255)
-                                    ->columnSpan(1),
-
-                                Select::make('role_name')
-                                    ->label('Required Role')
-                                    ->options(fn (): array => Role::query()->orderBy('name')->pluck('name', 'name')->all())
-                                    ->required()
-                                    ->columnSpan(1),
-                            ])
-                            ->columns(2)
-                            ->columnSpanFull(),
-                    ]),
             ]);
     }
 
@@ -143,4 +115,12 @@ class ApprovalFlowResource extends Resource
             'edit' => Pages\EditApprovalFlow::route('/{record}/edit'),
         ];
     }
+
+    public static function getRelations(): array
+    {
+        return [
+            RelationManagers\ApprovalFlowStepsRelationManager::class,
+        ];
+    }
+
 }

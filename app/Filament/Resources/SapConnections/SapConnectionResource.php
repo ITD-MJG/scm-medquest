@@ -25,11 +25,11 @@ class SapConnectionResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-server-stack';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'System Administration';
+    protected static string|\UnitEnum|null $navigationGroup = 'Admin Settings';
 
     protected static ?string $navigationLabel = 'SAP Connections';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 4;
 
     public static function canViewAny(): bool
     {

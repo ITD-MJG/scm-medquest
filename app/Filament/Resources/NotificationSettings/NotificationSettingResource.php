@@ -22,7 +22,8 @@ class NotificationSettingResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static string|UnitEnum|null $navigationGroup = 'System Administration';
+    protected static string|UnitEnum|null $navigationGroup = 'Admin Settings';
+    protected static ?int $navigationSort = 5;
 
     public static function canViewAny(): bool
     {

@@ -48,6 +48,8 @@ class TemperatureHumidityResource extends Resource
 
     protected static ?string $navigationLabel = 'All';
 
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-beaker';
+
     protected static string|\UnitEnum|null $navigationGroup = 'Temperature & Humidity';
 
     protected static bool $shouldRegisterNavigation = false;

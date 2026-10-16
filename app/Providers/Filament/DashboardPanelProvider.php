@@ -104,18 +104,15 @@ class DashboardPanelProvider extends PanelProvider
             ->navigationGroups([
                 NavigationGroup::make()
                     ->label('Temperature & Humidity')
-                    ->icon('heroicon-o-clipboard-document-list'),
+                    ->collapsed(true),
                 NavigationGroup::make()
                     ->label('Temperature Deviation')
-                    ->icon('heroicon-o-clipboard-document-list')
                     ->collapsed(true),
                 NavigationGroup::make()
                     ->label('Location Management')
-                    ->icon('heroicon-o-map-pin')
                     ->collapsed(true),
                 NavigationGroup::make()
                     ->label('Master Data')
-                    ->icon('heroicon-o-circle-stack')
                     ->collapsed(true),
                 NavigationGroup::make()
                     ->label('Admin Settings')

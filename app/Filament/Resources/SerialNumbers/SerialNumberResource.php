@@ -23,6 +23,8 @@ class SerialNumberResource extends Resource
 {
     protected static ?string $model = SerialNumber::class;
 
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-hashtag';
+
     protected static string | \UnitEnum | null $navigationGroup = 'Location Management';
     protected static ?int $navigationSort = 4;
     public static function canViewAny(): bool

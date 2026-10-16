@@ -41,6 +41,8 @@ class IncomingReceiptResource extends Resource
 
     protected static ?string $model = IncomingReceipt::class;
 
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-arrow-down-tray';
+
     protected static string|\UnitEnum|null $navigationGroup = 'Incoming';
 
     public static function getEloquentQuery(): Builder

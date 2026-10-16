@@ -26,6 +26,8 @@ use App\Filament\Resources\RoomTemperatureResource\RelationManagers;
 class RoomTemperatureResource extends Resource
 {
     protected static ?string $model = RoomTemperature::class;
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-fire';
+
     protected static string | \UnitEnum | null $navigationGroup = 'Location Management';
     protected static ?int $navigationSort = 3;
     public static function canViewAny(): bool

@@ -163,6 +163,10 @@ class GrifolsReceiptForm
                         TextInput::make('no_of_cases')
                             ->label('No. of Cases')
                             ->numeric(),
+                        Toggle::make('labeled_correctly')
+                            ->label('Labeled Correctly'),
+                        TextInput::make('pallet_id')
+                            ->label('Pallet/ID'),
                         Textarea::make('packaging_observation')
                             ->label('Packaging Observation')
                             ->columnSpanFull(),

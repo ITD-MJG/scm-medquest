@@ -17,6 +17,7 @@ class IncomingReceiptLine extends Model
         return [
             'expiry_date' => 'date',
             'quantity' => 'decimal:2',
+            'labeled_correctly' => 'boolean',
         ];
     }
 

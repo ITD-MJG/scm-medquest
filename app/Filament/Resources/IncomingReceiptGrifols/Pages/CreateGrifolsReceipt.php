@@ -89,6 +89,8 @@ class CreateGrifolsReceipt extends CreateRecord
                     'part_no' => $line['part_no'] ?? null,
                     'serial_no' => $line['serial_no'] ?? null,
                     'no_of_cases' => $line['no_of_cases'] ?? null,
+                    'labeled_correctly' => array_key_exists('labeled_correctly', $line) ? (bool) $line['labeled_correctly'] : null,
+                    'pallet_id' => $line['pallet_id'] ?? null,
                     'packaging_observation' => $line['packaging_observation'] ?? null,
                 ]);
             }

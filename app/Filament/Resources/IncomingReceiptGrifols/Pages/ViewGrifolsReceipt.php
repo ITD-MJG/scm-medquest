@@ -24,6 +24,12 @@ class ViewGrifolsReceipt extends ViewRecord
             EditAction::make()
                 ->visible(fn (): bool => $this->getRecord()->signoffs()->count() === 0
                     || auth()->user()->hasRole('Super Admin')),
+            Action::make('preview_pdf')
+                ->label('Preview PDF')
+                ->icon('heroicon-o-document-arrow-down')
+                ->color('gray')
+                ->url(fn (): string => route('incoming-receipts-grifols.print', ['record' => $this->getRecord()]))
+                ->openUrlInNewTab(),
             ...$this->getSignOffActions(),
         ];
     }
@@ -104,6 +110,11 @@ class ViewGrifolsReceipt extends ViewRecord
                                     ->formatStateUsing(fn ($state) => $state ?? '-'),
                                 TextEntry::make('no_of_cases')->label('No. of Cases')
                                     ->formatStateUsing(fn ($state) => $state ?? '-'),
+                                    TextEntry::make('labeled_correctly')
+                                        ->label('Labeled Correctly')
+                                        ->formatStateUsing(fn ($state) => $state === null ? '-' : ($state ? 'Yes' : 'No')),
+                                    TextEntry::make('pallet_id')->label('Pallet/ID')
+                                        ->formatStateUsing(fn ($state) => $state ?? '-'),
                                 TextEntry::make('packaging_observation')->label('Packaging Observation')
                                     ->formatStateUsing(fn ($state) => $state ?? '-'),
                             ])

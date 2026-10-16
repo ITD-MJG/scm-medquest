@@ -163,6 +163,8 @@
                     <th class="text-center" style="width: 35px;">UoM</th>
                     <th class="text-center">Abbreviation of Packaging Product</th>
                     <th class="text-center">Packing Condition</th>
+                    <th class="text-center" style="width: 35px;">Labeled Correctly (Y/N)</th>
+                    <th class="text-center">Pallet/ID</th>
                     <th class="text-center">Storage Conditions</th>
                     <th class="text-center">Remark</th>
                 </tr>
@@ -181,13 +183,14 @@
                         <td class="text-center">{{ $line->quantity }}</td>
                         <td class="text-center">{{ $line->uom ?? '-' }}</td>
                         <td>{{ $line->packaging_observation ?? '&ensp;-' }}</td>
+                        <td>{{ $line->labeled_correctly === null ? '-' : ($line->labeled_correctly ? 'Y' : 'N') }}</td>
+                        <td>{{ $line->pallet_id ?? '-' }}</td>
                         <td>{{ $line->physical_packing_condition ?? '-' }}</td>
                         <td>{{ $receipt->storage_requirement ?? '-' }}</td>
-                        <td>{{ $receipt->remark ?? '-' }}</td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="14" class="text-center">No line items.</td>
+                        <td colspan="15" class="text-center">No line items.</td>
                     </tr>
                 @endforelse
             </tbody>

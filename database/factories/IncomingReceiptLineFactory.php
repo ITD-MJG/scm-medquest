@@ -32,6 +32,12 @@ class IncomingReceiptLineFactory extends Factory
             'lot_no' => strtoupper(Str::random(6)),
             'quantity' => 0,
             'uom' => 'PCS',
+            'part_no' => null,
+            'serial_no' => null,
+            'no_of_cases' => null,
+            'labeled_correctly' => null,
+            'pallet_id' => null,
+            'packaging_observation' => null,
         ];
     }
 }

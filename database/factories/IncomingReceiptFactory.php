@@ -31,6 +31,8 @@ class IncomingReceiptFactory extends Factory
             'incoming_type' => IncomingType::NEW_INVENTORY_PO->value,
             'product_status' => ProductStatus::QUARANTINE->value,
             'location_id' => Location::factory(),
+            'registration_label_attached' => null,
+            'duration_of_transportation_hours' => null,
         ];
     }
 }

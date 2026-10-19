@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Contracts\HasSignOffs;
+use App\Enums\Disposition;
 use App\Enums\IncomingType;
 use App\Enums\ProductStatus;
 use App\Enums\ReceiptCategory;
@@ -24,10 +25,13 @@ class IncomingReceipt extends Model implements HasSignOffs
             'incoming_type' => IncomingType::class,
             'category' => ReceiptCategory::class,
             'product_status' => ProductStatus::class,
+            'disposition' => Disposition::class,
             'storage_requirement' => StorageRequirement::class,
             'receipt_date' => 'date',
             'unpacking_start_at' => 'datetime',
             'unpacking_finish_at' => 'datetime',
+            'registration_label_attached' => 'boolean',
+            'duration_of_transportation_hours' => 'decimal:2',
         ];
     }
 
@@ -45,6 +49,11 @@ class IncomingReceipt extends Model implements HasSignOffs
     public function lines(): HasMany
     {
         return $this->hasMany(IncomingReceiptLine::class);
+    }
+
+    public function getReceiptTotalAttribute(): float
+    {
+        return (float) $this->lines->sum('quantity');
     }
 
     public function location(): BelongsTo

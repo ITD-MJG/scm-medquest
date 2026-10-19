@@ -73,7 +73,7 @@ class ViewGrifolsReceipt extends ViewRecord
                         TextEntry::make('shipper_address')->label('Shipper Address'),
                         TextEntry::make('disposition')
                             ->label('Disposition')
-                            ->formatStateUsing(fn ($state) => $state ?? 'N/A'),
+                            ->formatStateUsing(fn ($state) => $state?->label() ?? 'N/A'),
                     ])
                     ->columns(2),
 
@@ -86,6 +86,12 @@ class ViewGrifolsReceipt extends ViewRecord
                         TextEntry::make('product_temp_result')->label('Product Temp. Result'),
                         TextEntry::make('product_temp_record_ref')->label('Product Temp. Record Ref.'),
                         TextEntry::make('storage_requirement')->label('Storage Requirement'),
+                        TextEntry::make('registration_label_attached')
+                            ->label('Registration Label Attached')
+                            ->formatStateUsing(fn ($state) => $state === null ? '-' : ($state ? 'Yes' : 'No')),
+                        TextEntry::make('duration_of_transportation_hours')
+                            ->label('Duration of Transportation (hours)')
+                            ->formatStateUsing(fn ($state) => $state ?? '-'),
                         TextEntry::make('remark')->label('Remark'),
                         TextEntry::make('unpacking_start_at')->label('Unpacking Start'),
                         TextEntry::make('unpacking_finish_at')->label('Unpacking Finish'),
@@ -110,15 +116,29 @@ class ViewGrifolsReceipt extends ViewRecord
                                     ->formatStateUsing(fn ($state) => $state ?? '-'),
                                 TextEntry::make('no_of_cases')->label('No. of Cases')
                                     ->formatStateUsing(fn ($state) => $state ?? '-'),
-                                    TextEntry::make('labeled_correctly')
-                                        ->label('Labeled Correctly')
-                                        ->formatStateUsing(fn ($state) => $state === null ? '-' : ($state ? 'Yes' : 'No')),
-                                    TextEntry::make('pallet_id')->label('Pallet/ID')
-                                        ->formatStateUsing(fn ($state) => $state ?? '-'),
+                                TextEntry::make('unit_per_case')->label('Unit per Case')
+                                    ->formatStateUsing(fn ($state) => $state ?? '-'),
+                                TextEntry::make('isn_or_packing_list')
+                                    ->label('ISN or Packing List')
+                                    ->formatStateUsing(fn ($state) => $state === null ? '-' : ($state ? 'Yes' : 'No')),
+                                TextEntry::make('labeledBy.name')
+                                    ->label('Labeled by')
+                                    ->formatStateUsing(fn ($state) => $state ?? '-'),
+                                TextEntry::make('physical_movement_by')
+                                    ->label('Physical Movement by')
+                                    ->formatStateUsing(fn ($state) => $state ?? '-'),
+                                TextEntry::make('labeled_correctly')
+                                    ->label('Labeled Correctly')
+                                    ->formatStateUsing(fn ($state) => $state === null ? '-' : ($state ? 'Yes' : 'No')),
+                                TextEntry::make('pallet_id')->label('Pallet/ID')
+                                    ->formatStateUsing(fn ($state) => $state ?? '-'),
                                 TextEntry::make('packaging_observation')->label('Packaging Observation')
                                     ->formatStateUsing(fn ($state) => $state ?? '-'),
                             ])
                             ->columns(3),
+                        TextEntry::make('receipt_total')
+                            ->label('Receipt Total')
+                            ->formatStateUsing(fn ($state) => $state ?? '-'),
                     ]),
 
                 Section::make('Sign-offs')

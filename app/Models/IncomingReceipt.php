@@ -49,6 +49,11 @@ class IncomingReceipt extends Model implements HasSignOffs
         return $this->hasMany(IncomingReceiptLine::class);
     }
 
+    public function getReceiptTotalAttribute(): float
+    {
+        return (float) $this->lines->sum('quantity');
+    }
+
     public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);

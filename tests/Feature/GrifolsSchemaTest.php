@@ -5,11 +5,37 @@ use App\Models\IncomingReceipt;
 use Illuminate\Support\Facades\Schema;
 
 it('has the grifols columns on incoming_receipts', function () {
-    expect(Schema::hasColumns('incoming_receipts', ['variant', 'disposition']))->toBeTrue();
+    expect(Schema::hasColumns('incoming_receipts', [
+        'variant',
+        'disposition',
+        'registration_label_attached',
+        'duration_of_transportation_hours',
+    ]))->toBeTrue();
 });
 
 it('has the grifols columns on incoming_receipt_lines', function () {
-    expect(Schema::hasColumns('incoming_receipt_lines', ['part_no', 'serial_no', 'no_of_cases', 'packaging_observation']))->toBeTrue();
+    expect(Schema::hasColumns('incoming_receipt_lines', [
+        'part_no',
+        'serial_no',
+        'no_of_cases',
+        'unit_per_case',
+        'isn_or_packing_list',
+        'labeled_by',
+        'packaging_observation',
+        'physical_movement_by',
+    ]))->toBeTrue();
+});
+
+it('makes the paper-parity columns nullable', function () {
+    $nullable = fn (string $table): array => collect(Schema::getColumns($table))
+        ->where('nullable', true)
+        ->pluck('name')
+        ->all();
+
+    expect($nullable('incoming_receipts'))
+        ->toContain('registration_label_attached', 'duration_of_transportation_hours')
+        ->and($nullable('incoming_receipt_lines'))
+        ->toContain('unit_per_case', 'isn_or_packing_list', 'labeled_by', 'physical_movement_by');
 });
 
 it('defaults variant to standard and keeps the plain document type', function () {

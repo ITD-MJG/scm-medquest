@@ -35,9 +35,13 @@ class IncomingReceiptLineFactory extends Factory
             'part_no' => null,
             'serial_no' => null,
             'no_of_cases' => null,
+            'unit_per_case' => null,
             'labeled_correctly' => null,
+            'isn_or_packing_list' => null,
             'pallet_id' => null,
+            'labeled_by' => null,
             'packaging_observation' => null,
+            'physical_movement_by' => null,
         ];
     }
 }

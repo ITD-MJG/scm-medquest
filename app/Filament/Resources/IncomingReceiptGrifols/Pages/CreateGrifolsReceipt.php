@@ -83,8 +83,6 @@ class CreateGrifolsReceipt extends CreateRecord
                     'physical_packing_condition' => $line['physical_packing_condition'] ?? null,
                     'registration_label_no' => $line['registration_label_no'] ?? null,
                     'registration_label_qa_by' => $line['registration_label_qa_by'] ?? null,
-                    'function_test_result' => $line['function_test_result'] ?? null,
-                    'function_test_by' => $line['function_test_by'] ?? null,
                     'room_id' => $line['room_id'] ?? null,
                     'part_no' => $line['part_no'] ?? null,
                     'serial_no' => $line['serial_no'] ?? null,

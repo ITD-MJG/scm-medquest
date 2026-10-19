@@ -148,10 +148,6 @@ class GrifolsReceiptForm
                             ->label('Registration Label QA By')
                             ->options(fn () => User::query()->orderBy('name')->pluck('name', 'id'))
                             ->searchable(),
-                        TextInput::make('function_test_result')
-                            ->label('Function Test Result'),
-                        TextInput::make('function_test_by')
-                            ->label('Function Test By'),
                         Select::make('room_id')
                             ->label('Room')
                             ->options(fn () => Room::query()->orderBy('room_name')->pluck('room_name', 'id'))

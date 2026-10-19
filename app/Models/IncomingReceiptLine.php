@@ -18,6 +18,8 @@ class IncomingReceiptLine extends Model
             'expiry_date' => 'date',
             'quantity' => 'decimal:2',
             'labeled_correctly' => 'boolean',
+            'unit_per_case' => 'integer',
+            'isn_or_packing_list' => 'boolean',
         ];
     }
 
@@ -44,5 +46,10 @@ class IncomingReceiptLine extends Model
     public function registrationLabelQaBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'registration_label_qa_by');
+    }
+
+    public function labeledBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'labeled_by');
     }
 }

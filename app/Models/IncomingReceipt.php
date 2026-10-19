@@ -28,6 +28,8 @@ class IncomingReceipt extends Model implements HasSignOffs
             'receipt_date' => 'date',
             'unpacking_start_at' => 'datetime',
             'unpacking_finish_at' => 'datetime',
+            'registration_label_attached' => 'boolean',
+            'duration_of_transportation_hours' => 'decimal:2',
         ];
     }
 

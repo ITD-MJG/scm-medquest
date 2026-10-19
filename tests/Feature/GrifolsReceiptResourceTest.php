@@ -308,6 +308,29 @@ it('does not block a save when quantity disagrees with cases times unit per case
     expect(IncomingReceiptLine::firstOrFail()->quantity)->toBe('7.00');
 });
 
+it('rejects a fractional no of cases instead of rounding it', function () {
+    $product = Product::factory()->create();
+
+    Livewire::test(CreateGrifolsReceipt::class)
+        ->fillForm(grifolsPayload($this->location, $product, [
+            'lines' => [[
+                'product_id' => $product->id,
+                'internal_code' => $product->internal_code,
+                'product_description' => $product->description,
+                'lot_no' => '471000',
+                'quantity' => 7.5,
+                'uom' => 'KIT',
+                'no_of_cases' => 2.5,
+                'unit_per_case' => 3,
+            ]],
+        ]))
+        ->call('create')
+        ->assertHasFormErrors(['lines.0.no_of_cases']);
+
+    expect(IncomingReceipt::count())->toBe(0)
+        ->and(IncomingReceiptLine::count())->toBe(0);
+});
+
 it('shows the quantity mismatch hint when it disagrees with cases times unit per case', function () {
     $product = Product::factory()->create();
 

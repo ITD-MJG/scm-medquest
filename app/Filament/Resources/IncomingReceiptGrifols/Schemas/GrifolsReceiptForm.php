@@ -171,7 +171,8 @@ class GrifolsReceiptForm
                             ->label('Serial No.'),
                         TextInput::make('no_of_cases')
                             ->label('No. of Cases')
-                            ->numeric()
+                            ->integer()
+                            ->minValue(1)
                             ->live(),
                         TextInput::make('unit_per_case')
                             ->label('Unit per Case')

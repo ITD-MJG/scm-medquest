@@ -200,7 +200,7 @@
                 @forelse($receipt->lines as $line)
                     <tr>
                         <td class="text-center">{{ $line->line_no ?? $loop->iteration }}</td>
-                        <td>{{ $line->product->principal->name ?? '-' }}</td>
+                        <td>{{ $line->batch->product->principal->name ?? '-' }}</td>
                         <td>{{ $line->internal_code ?? '-' }}</td>
                         <td>{{ $line->part_no ?? '-' }}</td>
                         <td>{{ $displayLot($line->lot_no) }}</td>
@@ -233,6 +233,9 @@
         </table>
         <p class="mb-0" style="font-size: 10px;">
             Abbreviation of Packaging Product:&ensp;ea = each,&ensp;unit = unit,&ensp;kit = kit
+        </p>
+        <p class="mb-0" style="font-size: 10px;">
+            Receipt Total (item of products per sheet):&ensp;{{ $receipt->receipt_total }}
         </p>
     </div>
 

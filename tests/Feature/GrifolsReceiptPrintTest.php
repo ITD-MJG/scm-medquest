@@ -2,10 +2,13 @@
 
 use App\Enums\Disposition;
 use App\Enums\StorageRequirement;
+use App\Models\Batch;
 use App\Models\Carrier;
 use App\Models\IncomingReceipt;
 use App\Models\IncomingReceiptLine;
 use App\Models\Location;
+use App\Models\Principal;
+use App\Models\Product;
 use App\Models\Room;
 use App\Models\Supplier;
 use App\Models\User;
@@ -112,7 +115,7 @@ function grifolsPrint(IncomingReceipt $receipt): string
 {
     return view('print.incoming-grifols', [
         'receipt' => $receipt->load(
-            'lines.product.principal',
+            'lines.batch.product.principal',
             'lines.labeledBy',
             'lines.room',
             'signoffs',
@@ -155,8 +158,13 @@ it('renders each line value under its own header', function () {
     $room = Room::factory()->create(['room_name' => 'D.13.E.3']);
     $labeler = User::factory()->create(['name' => 'Siti Labeler']);
 
+    $principal = Principal::factory()->create(['name' => 'GRIFOLS']);
+    $product = Product::factory()->create(['principal_id' => $principal->id]);
+    $batch = Batch::factory()->create(['product_id' => $product->id]);
+
     $receipt = grifolsReceipt(['storage_requirement' => StorageRequirement::MINUS_35_MINUS_15]);
     IncomingReceiptLine::factory()->for($receipt, 'receipt')->create([
+        'batch_id' => $batch->id,
         'line_no' => 4,
         'part_no' => 'PN-12345',
         'serial_no' => 'SN-0001',
@@ -185,6 +193,7 @@ it('renders each line value under its own header', function () {
     $row = array_combine($table['headers'], $table['rows'][0]);
 
     expect($row['No'])->toBe('4')
+        ->and($row['Principal'])->toBe('GRIFOLS')
         ->and($row['Part No'])->toBe('PN-12345')
         ->and($row['Lot'])->toBe('710333')
         ->and($row['Serial No'])->toBe('SN-0001')
@@ -305,6 +314,21 @@ it('keeps the packaging abbreviation as a legend, not as a column', function () 
 
     expect(grifolsLineTable($html)['headers'])->not->toContain('Abbreviation of Packaging Product')
         ->and($html)->toContain('Abbreviation of Packaging Product:&ensp;ea = each,&ensp;unit = unit,&ensp;kit = kit');
+});
+
+it('prints the receipt total as the sum of the line quantities', function () {
+    $receipt = grifolsReceipt();
+
+    foreach ([5, 10, 10, 5] as $index => $quantity) {
+        IncomingReceiptLine::factory()->for($receipt, 'receipt')->create([
+            'line_no' => $index + 1,
+            'quantity' => $quantity,
+        ]);
+    }
+
+    $html = grifolsPrint($receipt);
+
+    expect($html)->toContain('Receipt Total (item of products per sheet):&ensp;30');
 });
 
 it('spans the empty-state row across every header', function () {

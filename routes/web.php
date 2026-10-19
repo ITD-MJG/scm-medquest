@@ -134,7 +134,7 @@ Route::get('/incoming-receipts-grifols/{record}/print', function (IncomingReceip
     abort_unless(HasLocationBasedAccess::canAccessLocation((int) $record->location_id), 403);
 
     $html = view('print.incoming-grifols', [
-        'receipt' => $record->load('lines.product.principal', 'lines.batch.product', 'lines.labeledBy', 'lines.room', 'signoffs', 'location', 'supplier', 'carrier'),
+        'receipt' => $record->load('lines.batch.product.principal', 'lines.labeledBy', 'lines.room', 'signoffs', 'location', 'supplier', 'carrier'),
     ]);
 
     $pdf = Browsershot::html($html)->setNodeBinary((string) config('browsershot.node_binary'))->format('A4')->margins(3, 3, 3, 3)->landscape()->showBackground()->pdf();

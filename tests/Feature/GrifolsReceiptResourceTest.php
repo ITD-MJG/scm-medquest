@@ -307,6 +307,53 @@ it('does not block a save when quantity disagrees with cases times unit per case
     expect(IncomingReceiptLine::firstOrFail()->quantity)->toBe('7.00');
 });
 
+it('shows the quantity mismatch hint when it disagrees with cases times unit per case', function () {
+    $product = Product::factory()->create();
+
+    Livewire::test(CreateGrifolsReceipt::class)
+        ->fillForm(grifolsPayload($this->location, $product, [
+            'lines' => [[
+                'product_id' => $product->id,
+                'internal_code' => $product->internal_code,
+                'product_description' => $product->description,
+                'lot_no' => '471000',
+                'quantity' => 7,
+                'uom' => 'KIT',
+                'no_of_cases' => 10,
+                'unit_per_case' => 1,
+            ]],
+        ]))
+        ->assertSee('No. of Cases x Unit per Case = 10, but Quantity is 7. Check the paper form.');
+});
+
+it('shows the match hint without contradicting itself when quantity only differs below two decimals', function () {
+    $product = Product::factory()->create();
+
+    Livewire::test(CreateGrifolsReceipt::class)
+        ->fillForm(grifolsPayload($this->location, $product, [
+            'lines' => [[
+                'product_id' => $product->id,
+                'internal_code' => $product->internal_code,
+                'product_description' => $product->description,
+                'lot_no' => '471000',
+                'quantity' => 10.004,
+                'uom' => 'KIT',
+                'no_of_cases' => 10,
+                'unit_per_case' => 1,
+            ]],
+        ]))
+        ->assertSee('Matches No. of Cases x Unit per Case (10).')
+        ->assertDontSee('Check the paper form');
+});
+
+it('rebinds the quantity field so the hint recomputes as it is typed', function () {
+    // A non-live quantity would leave the helper text frozen at its previous
+    // value when cases/unit are typed first, so the binding itself must be live.
+    $html = Livewire::test(CreateGrifolsReceipt::class)->html();
+
+    expect($html)->toMatch('/wire:model\.live="data\.lines\.[^"]+\.quantity"/');
+});
+
 it('keeps the nullable yes/no line field unset when it is not chosen', function () {
     $product = Product::factory()->create();
 
@@ -328,4 +375,29 @@ it('keeps the nullable yes/no line field unset when it is not chosen', function 
 
     expect($receipt->registration_label_attached)->toBeNull()
         ->and($receipt->lines()->firstOrFail()->isn_or_packing_list)->toBeNull();
+});
+
+it('persists an explicit no for the nullable yes/no fields', function () {
+    $product = Product::factory()->create();
+
+    Livewire::test(CreateGrifolsReceipt::class)
+        ->fillForm(grifolsPayload($this->location, $product, [
+            'registration_label_attached' => false,
+            'lines' => [[
+                'product_id' => $product->id,
+                'internal_code' => $product->internal_code,
+                'product_description' => $product->description,
+                'lot_no' => '471000',
+                'quantity' => 5,
+                'uom' => 'KIT',
+                'isn_or_packing_list' => false,
+            ]],
+        ]))
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $receipt = IncomingReceipt::firstOrFail();
+
+    expect($receipt->registration_label_attached)->toBeFalse()
+        ->and($receipt->lines()->firstOrFail()->isn_or_packing_list)->toBeFalse();
 });

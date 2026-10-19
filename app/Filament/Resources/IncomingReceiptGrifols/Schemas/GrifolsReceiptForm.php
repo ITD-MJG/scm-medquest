@@ -144,6 +144,7 @@ class GrifolsReceiptForm
                             ->label('Quantity')
                             ->numeric()
                             ->required()
+                            ->live()
                             ->helperText(fn (Get $get): ?string => self::quantityHint($get)),
                         TextInput::make('uom')
                             ->label('UoM')
@@ -174,7 +175,7 @@ class GrifolsReceiptForm
                             ->live(),
                         TextInput::make('unit_per_case')
                             ->label('Unit per Case')
-                            ->numeric()
+                            ->integer()
                             ->minValue(1)
                             ->live(),
                         Toggle::make('labeled_correctly')
@@ -216,7 +217,9 @@ class GrifolsReceiptForm
             return 'Expected '.self::trimNumber($expected).' from No. of Cases x Unit per Case.';
         }
 
-        return (float) $quantity === $expected
+        // The column is decimal:2, so compare at that precision instead of on raw
+        // floats, which disagree on products like 7 x 1.1 and print "7.7 is not 7.7".
+        return round($expected, 2) === round((float) $quantity, 2)
             ? 'Matches No. of Cases x Unit per Case ('.self::trimNumber($expected).').'
             : 'No. of Cases x Unit per Case = '.self::trimNumber($expected)
                 .', but Quantity is '.self::trimNumber((float) $quantity).'. Check the paper form.';

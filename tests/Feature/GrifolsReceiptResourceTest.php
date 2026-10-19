@@ -5,6 +5,7 @@ use App\Filament\Resources\IncomingReceiptGrifols\GrifolsReceiptResource;
 use App\Filament\Resources\IncomingReceiptGrifols\Pages\CreateGrifolsReceipt;
 use App\Filament\Resources\IncomingReceiptGrifols\Pages\EditGrifolsReceipt;
 use App\Filament\Resources\IncomingReceiptGrifols\Pages\ListGrifolsReceipts;
+use App\Filament\Resources\IncomingReceiptGrifols\Pages\ViewGrifolsReceipt;
 use App\Filament\Resources\IncomingReceipts\Pages\ListIncomingReceipts;
 use App\Models\Batch;
 use App\Models\IncomingReceipt;
@@ -400,4 +401,48 @@ it('persists an explicit no for the nullable yes/no fields', function () {
 
     expect($receipt->registration_label_attached)->toBeFalse()
         ->and($receipt->lines()->firstOrFail()->isn_or_packing_list)->toBeFalse();
+});
+
+/**
+ * Infolist entries render as `<label>` and value in sibling divs, so comparing
+ * the flattened text is the only way to prove a label sits next to its value.
+ */
+function infolistText(string $html): string
+{
+    return trim(preg_replace('/\s+/', ' ', preg_replace('/<[^>]+>/', ' ', $html)));
+}
+
+it('shows the grifols paper-parity fields on the view page', function () {
+    $labeler = User::factory()->create(['name' => 'Rina Labeler']);
+
+    $receipt = IncomingReceipt::factory()->create([
+        'location_id' => $this->location->id,
+        'variant' => 'grifols',
+        'receipt_no' => 'GFL-VIEW/1',
+        'disposition' => Disposition::RELEASED,
+        'registration_label_attached' => true,
+        'duration_of_transportation_hours' => 2.5,
+    ]);
+
+    IncomingReceiptLine::factory()->for($receipt, 'receipt')->create([
+        'line_no' => 1,
+        'quantity' => 30,
+        'no_of_cases' => 30,
+        'unit_per_case' => 1,
+        'isn_or_packing_list' => false,
+        'labeled_by' => $labeler->id,
+        'physical_movement_by' => 'Bagus',
+    ]);
+
+    $text = infolistText(Livewire::test(ViewGrifolsReceipt::class, ['record' => $receipt->getKey()])->html());
+
+    expect($text)
+        ->toContain('Disposition Released')
+        ->toContain('Registration Label Attached Yes')
+        ->toContain('Duration of Transportation (hours) 2.50')
+        ->toContain('Unit per Case 1')
+        ->toContain('ISN or Packing List No')
+        ->toContain('Labeled by Rina Labeler')
+        ->toContain('Physical Movement by Bagus')
+        ->toContain('Receipt Total 30');
 });

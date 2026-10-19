@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\IncomingReceiptGrifols\Schemas;
 
+use App\Enums\Disposition;
 use App\Enums\IncomingType;
 use App\Enums\ProductStatus;
 use App\Enums\StorageRequirement;
@@ -16,6 +17,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 
 class GrifolsReceiptForm
@@ -83,13 +85,17 @@ class GrifolsReceiptForm
                         Select::make('storage_requirement')
                             ->label('Storage Requirement')
                             ->options(StorageRequirement::class),
+                        Select::make('registration_label_attached')
+                            ->label('Registration Label Attached to Product')
+                            ->boolean(),
+                        TextInput::make('duration_of_transportation_hours')
+                            ->label('Duration of Transportation (hours)')
+                            ->numeric()
+                            ->minValue(0),
                         TextInput::make('remark'),
                         Select::make('disposition')
                             ->label('Disposition')
-                            ->options([
-                                'Released' => 'Released',
-                                'Quarantine' => 'Quarantine',
-                            ])
+                            ->options(Disposition::class)
                             ->nullable()
                             ->default(null)
                             ->visible(fn () => auth()->user()->hasAnyRole(['Supply Chain Manager', 'Super Admin'])),
@@ -123,6 +129,7 @@ class GrifolsReceiptForm
                                 $product = Product::find($state);
                                 $set('internal_code', $product?->internal_code);
                                 $set('product_description', $product?->description);
+                                $set('part_no', $product?->part_no);
                                 $set('uom', $product?->uom);
                             }),
                         TextInput::make('internal_code')
@@ -136,7 +143,8 @@ class GrifolsReceiptForm
                         TextInput::make('quantity')
                             ->label('Quantity')
                             ->numeric()
-                            ->required(),
+                            ->required()
+                            ->helperText(fn (Get $get): ?string => self::quantityHint($get)),
                         TextInput::make('uom')
                             ->label('UoM')
                             ->required(),
@@ -146,6 +154,10 @@ class GrifolsReceiptForm
                             ->label('Registration Label No.'),
                         Select::make('registration_label_qa_by')
                             ->label('Registration Label QA By')
+                            ->options(fn () => User::query()->orderBy('name')->pluck('name', 'id'))
+                            ->searchable(),
+                        Select::make('labeled_by')
+                            ->label('Labeled by')
                             ->options(fn () => User::query()->orderBy('name')->pluck('name', 'id'))
                             ->searchable(),
                         Select::make('room_id')
@@ -158,17 +170,60 @@ class GrifolsReceiptForm
                             ->label('Serial No.'),
                         TextInput::make('no_of_cases')
                             ->label('No. of Cases')
-                            ->numeric(),
+                            ->numeric()
+                            ->live(),
+                        TextInput::make('unit_per_case')
+                            ->label('Unit per Case')
+                            ->numeric()
+                            ->minValue(1)
+                            ->live(),
                         Toggle::make('labeled_correctly')
                             ->label('Labeled Correctly'),
+                        Select::make('isn_or_packing_list')
+                            ->label('ISN or Packing List')
+                            ->boolean(),
                         TextInput::make('pallet_id')
                             ->label('Pallet/ID'),
                         Textarea::make('packaging_observation')
                             ->label('Packaging Observation')
                             ->columnSpanFull(),
+                        TextInput::make('physical_movement_by')
+                            ->label('Physical Movement by'),
                     ])
                     ->columns(3),
             ])
             ->columns(1);
+    }
+
+    /**
+     * The paper's Quantity is No. of Cases x Unit per Case. Real sheets carry
+     * partial cases and mixed units, so a mismatch is surfaced as a hint and
+     * never blocks the save of a controlled document.
+     */
+    protected static function quantityHint(Get $get): ?string
+    {
+        $cases = $get('no_of_cases');
+        $unitPerCase = $get('unit_per_case');
+
+        if (blank($cases) || blank($unitPerCase)) {
+            return null;
+        }
+
+        $expected = (float) $cases * (float) $unitPerCase;
+        $quantity = $get('quantity');
+
+        if (blank($quantity)) {
+            return 'Expected '.self::trimNumber($expected).' from No. of Cases x Unit per Case.';
+        }
+
+        return (float) $quantity === $expected
+            ? 'Matches No. of Cases x Unit per Case ('.self::trimNumber($expected).').'
+            : 'No. of Cases x Unit per Case = '.self::trimNumber($expected)
+                .', but Quantity is '.self::trimNumber((float) $quantity).'. Check the paper form.';
+    }
+
+    protected static function trimNumber(float $value): string
+    {
+        return rtrim(rtrim(number_format($value, 2, '.', ''), '0'), '.');
     }
 }

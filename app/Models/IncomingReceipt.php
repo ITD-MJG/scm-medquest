@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Contracts\HasSignOffs;
+use App\Enums\Disposition;
 use App\Enums\IncomingType;
 use App\Enums\ProductStatus;
 use App\Enums\ReceiptCategory;
@@ -24,6 +25,7 @@ class IncomingReceipt extends Model implements HasSignOffs
             'incoming_type' => IncomingType::class,
             'category' => ReceiptCategory::class,
             'product_status' => ProductStatus::class,
+            'disposition' => Disposition::class,
             'storage_requirement' => StorageRequirement::class,
             'receipt_date' => 'date',
             'unpacking_start_at' => 'datetime',

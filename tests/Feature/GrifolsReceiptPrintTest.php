@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Disposition;
 use App\Models\IncomingReceipt;
 use App\Models\IncomingReceiptLine;
 use App\Models\Location;
@@ -51,10 +52,12 @@ it('prints N/A when disposition is null and the value when set', function () {
 
     expect($html)->toContain('N/A');
 
-    $receipt->update(['disposition' => 'Released']);
+    $receipt->update(['disposition' => Disposition::RELEASED]);
     $html = view('print.incoming-grifols', ['receipt' => $receipt->load('lines', 'signoffs')])->render();
 
-    expect($html)->toContain('Released');
+    // The print view still renders the raw enum value; Task 6 switches it to
+    // `?->label()` and this assertion becomes 'Released'.
+    expect($html)->toContain(Disposition::RELEASED->value);
 });
 
 it('blocks a print route from another location', function () {

@@ -39,6 +39,9 @@ class CreateGrifolsReceipt extends CreateRecord
                 'product_temp_result' => $data['product_temp_result'] ?? null,
                 'product_temp_record_ref' => $data['product_temp_record_ref'] ?? null,
                 'storage_requirement' => $data['storage_requirement'] ?? null,
+                'registration_label_attached' => $data['registration_label_attached'] ?? null,
+                'duration_of_transportation_hours' => $data['duration_of_transportation_hours'] ?? null,
+                'disposition' => $data['disposition'] ?? null,
                 'unpacking_start_at' => $data['unpacking_start_at'] ?? null,
                 'unpacking_finish_at' => $data['unpacking_finish_at'] ?? null,
                 'location_id' => $data['location_id'],
@@ -83,13 +86,17 @@ class CreateGrifolsReceipt extends CreateRecord
                     'physical_packing_condition' => $line['physical_packing_condition'] ?? null,
                     'registration_label_no' => $line['registration_label_no'] ?? null,
                     'registration_label_qa_by' => $line['registration_label_qa_by'] ?? null,
+                    'labeled_by' => $line['labeled_by'] ?? null,
                     'room_id' => $line['room_id'] ?? null,
                     'part_no' => $line['part_no'] ?? null,
                     'serial_no' => $line['serial_no'] ?? null,
                     'no_of_cases' => $line['no_of_cases'] ?? null,
+                    'unit_per_case' => $line['unit_per_case'] ?? null,
                     'labeled_correctly' => array_key_exists('labeled_correctly', $line) ? (bool) $line['labeled_correctly'] : null,
+                    'isn_or_packing_list' => $line['isn_or_packing_list'] ?? null,
                     'pallet_id' => $line['pallet_id'] ?? null,
                     'packaging_observation' => $line['packaging_observation'] ?? null,
+                    'physical_movement_by' => $line['physical_movement_by'] ?? null,
                 ]);
             }
 

@@ -78,6 +78,9 @@
         $displayLot = function ($value) {
             return ($value === null || trim((string) $value) === '') ? 'N/A' : $value;
         };
+
+        // Nullable booleans on the paper are tri-state: an unanswered box is not "No".
+        $triState = fn (?bool $value) => $value === null ? '-' : ($value ? 'Y' : 'N');
     @endphp
 
     <div class="container-fluid header-section">
@@ -121,6 +124,7 @@
                     <div class="col-4">
                         <p class="mb-0" style="font-size: 11px;">Receipt No.</p>
                         <p class="mb-0" style="font-size: 11px;">Purchase Order No.</p>
+                        <p class="mb-0" style="font-size: 11px;">Carrier</p>
                         <p class="mb-0" style="font-size: 11px;">Receipt Date / Time</p>
                         <p class="mb-0" style="font-size: 11px;">Shipper Name and Address</p>
                         <p class="mb-0" style="font-size: 11px;">Incoming Type</p>
@@ -128,9 +132,11 @@
                     <div class="col-8">
                         <p class="mb-0" style="font-size: 11px;">:&ensp;{{ $receipt->receipt_no ?? '-' }}</p>
                         <p class="mb-0" style="font-size: 11px;">:&ensp;{{ $receipt->purchase_order_no ?? '-' }}</p>
+                        <p class="mb-0" style="font-size: 11px;">:&ensp;{{ $receipt->carrier->name ?? '-' }}</p>
                         <p class="mb-0" style="font-size: 11px;">
                             :&ensp;{{ $receipt->receipt_date ? strtoupper(\Carbon\Carbon::parse($receipt->receipt_date)->format('d M Y H:i')) : '-' }}</p>
-                        <p class="mb-0" style="font-size: 11px;">:&ensp;{{ $receipt->supplier->name ?? '-' }}</p>
+                        <p class="mb-0" style="font-size: 11px;">
+                            :&ensp;{{ collect([$receipt->supplier?->name, $receipt->shipper_address])->filter()->implode(', ') ?: '-' }}</p>
                         <p class="mb-0" style="font-size: 11px;">:&ensp;@foreach($incomingTypeChecks as $label => $on){!! $check($on) !!} {{ $label }} &ensp;@endforeach</p>
                     </div>
                 </div>
@@ -143,7 +149,7 @@
                         <p class="mb-0" style="font-size: 11px;">Storage Requirement</p>
                         <p class="mb-0" style="font-size: 11px;">Unpacking Start / Finish Time</p>
                         <p class="mb-0" style="font-size: 11px;">Product Temperature Result</p>
-                        <p class="mb-0" style="font-size: 11px;">Package Conditions</p>
+                        <p class="mb-0" style="font-size: 11px;">Registration Label attached (Y/N)</p>
                         <p class="mb-0" style="font-size: 11px;">Location</p>
                         <p class="mb-0" style="font-size: 11px;">Remark</p>
                     </div>
@@ -152,7 +158,7 @@
                         <p class="mb-0" style="font-size: 11px;">
                             :&ensp;{{ $receipt->unpacking_start_at ?? '-' }} / {{ $receipt->unpacking_finish_at ?? '-' }}</p>
                         <p class="mb-0" style="font-size: 11px;">:&ensp;{!! $check((bool) $receipt->measured_by_device) !!} Temperature measured by Device (Y/N) &ensp; Product Temperature Result: {{ $receipt->product_temp_result ?? '-' }}</p>
-                        <p class="mb-0" style="font-size: 11px;">:&ensp;{{ $receipt->product_status?->value ?? $receipt->product_status ?? '-' }}</p>
+                        <p class="mb-0" style="font-size: 11px;">:&ensp;{{ $triState($receipt->registration_label_attached) }}</p>
                         <p class="mb-0" style="font-size: 11px;">:&ensp;{{ $receipt->location->location_name ?? '-' }}</p>
                         <p class="mb-0" style="font-size: 11px;">:&ensp;{{ $receipt->remark ?? '-' }}</p>
                     </div>
@@ -174,14 +180,20 @@
                     <th class="text-center">Serial No</th>
                     <th class="text-center" style="width: 70px;">Expiry Date</th>
                     <th class="text-center" style="width: 40px;">No. of Cases</th>
+                    <th class="text-center" style="width: 40px;">Unit per Case</th>
                     <th class="text-center" style="width: 35px;">Qty</th>
                     <th class="text-center" style="width: 35px;">UoM</th>
-                    <th class="text-center">Abbreviation of Packaging Product</th>
-                    <th class="text-center">Packing Condition</th>
                     <th class="text-center" style="width: 35px;">Labeled Correctly (Y/N)</th>
+                    <th class="text-center" style="width: 40px;">ISN or Packing List (Y/N)</th>
                     <th class="text-center">Pallet/ID</th>
+                    <th class="text-center">Physical Condition</th>
                     <th class="text-center">Storage Conditions</th>
                     <th class="text-center">Remark</th>
+                    <th class="text-center">Packaging Observation</th>
+                    <th class="text-center">Registration Label No.</th>
+                    <th class="text-center">Labeled by</th>
+                    <th class="text-center">Storage Location</th>
+                    <th class="text-center">Physical Movement by</th>
                 </tr>
             </thead>
             <tbody>
@@ -190,22 +202,31 @@
                         <td class="text-center">{{ $line->line_no ?? $loop->iteration }}</td>
                         <td>{{ $line->product->principal->name ?? '-' }}</td>
                         <td>{{ $line->internal_code ?? '-' }}</td>
-                        <td>{{ $line->part_no ?? '&ensp;-' }}</td>
+                        <td>{{ $line->part_no ?? '-' }}</td>
                         <td>{{ $displayLot($line->lot_no) }}</td>
-                        <td>{{ $line->serial_no ?? '&ensp;-' }}</td>
+                        <td>{{ $line->serial_no ?? '-' }}</td>
                         <td class="text-center">{{ $displayDate($line->expiry_date) }}</td>
-                        <td class="text-center">{{ $line->no_of_cases ?? '&ensp;-' }}</td>
+                        <td class="text-center">{{ $line->no_of_cases ?? '-' }}</td>
+                        <td class="text-center">{{ $line->unit_per_case ?? '-' }}</td>
                         <td class="text-center">{{ $line->quantity }}</td>
                         <td class="text-center">{{ $line->uom ?? '-' }}</td>
-                        <td>{{ $line->packaging_observation ?? '&ensp;-' }}</td>
-                        <td>{{ $line->labeled_correctly === null ? '-' : ($line->labeled_correctly ? 'Y' : 'N') }}</td>
+                        <td class="text-center">{{ $triState($line->labeled_correctly) }}</td>
+                        <td class="text-center">{{ $triState($line->isn_or_packing_list) }}</td>
                         <td>{{ $line->pallet_id ?? '-' }}</td>
                         <td>{{ $line->physical_packing_condition ?? '-' }}</td>
-                        <td>{{ $receipt->storage_requirement ?? '-' }}</td>
+                        <td>{{ $receipt->storage_requirement?->label() ?? '-' }}</td>
+                        {{-- The paper has a per-line Remark cell but no column backs it;
+                             the receipt-level remark prints in the header grid. --}}
+                        <td>-</td>
+                        <td>{{ $line->packaging_observation ?? '-' }}</td>
+                        <td>{{ $line->registration_label_no ?? '-' }}</td>
+                        <td>{{ $line->labeledBy?->name ?? '-' }}</td>
+                        <td>{{ $line->room?->room_name ?? '-' }}</td>
+                        <td>{{ $line->physical_movement_by ?? '-' }}</td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="15" class="text-center">No line items.</td>
+                        <td colspan="22" class="text-center">No line items.</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -234,7 +255,9 @@
                             <strong>{{ $steps[$stepKey]['label'] }}</strong><br>
                             ({{ $steps[$stepKey]['role'] }})<br>
                             @if ($slotKey === 'disposition')
-                                {{ $receipt->disposition ?? 'N/A' }}<br><br>
+                                {{ $receipt->disposition?->label() ?? 'N/A' }}<br>
+                                Duration of transportation:
+                                {{ $receipt->duration_of_transportation_hours !== null ? $receipt->duration_of_transportation_hours . ' hour' : 'N/A' }}<br>
                             @else
                                 <br>
                             @endif

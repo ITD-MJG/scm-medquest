@@ -7,11 +7,11 @@ use App\Mail\TemperatureHumidityBulkNotification;
 use App\Models\IncomingReceipt;
 use App\Models\TemperatureDeviation; // Add this line
 use App\Models\TemperatureHumidity;
+use App\Support\BrowserPdf;
 use App\Traits\HasLocationBasedAccess;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
-use Spatie\Browsershot\Browsershot;
 
 // Redirect root to dashboard
 Route::get('/', fn () => redirect(filament()->getHomeUrl()));
@@ -59,7 +59,7 @@ Route::get('/temperature-humidities/bulk-export', function () {
         'tempHumidity' => $tempHumidity,
         'groupedTempHumidity' => $groupedTempHumidity,
     ]);
-    $pdf = Browsershot::html($html)->setNodeBinary((string) config('browsershot.node_binary'))
+    $pdf = BrowserPdf::fromHtml($html)
         ->format('A4')
         ->margins(3, 3, 3, 3)
         ->landscape()
@@ -101,7 +101,7 @@ Route::get('/temperature-deviations/bulk-export', function () {
         'temperatureDeviations' => $temperatureDeviations,
         'groupedDeviations' => $groupedDeviations,
     ]);
-    $pdf = Browsershot::html($html)->setNodeBinary((string) config('browsershot.node_binary'))
+    $pdf = BrowserPdf::fromHtml($html)
         ->format('A4')
         ->margins(3, 3, 3, 3)
         ->landscape()
@@ -121,7 +121,7 @@ Route::get('/incoming-receipts/{record}/print', function (IncomingReceipt $recor
         'receipt' => $record->load('lines.batch.product', 'signoffs', 'location', 'supplier', 'carrier'),
     ]);
 
-    $pdf = Browsershot::html($html)->setNodeBinary((string) config('browsershot.node_binary'))->format('A4')->margins(3, 3, 3, 3)->landscape()->showBackground()->pdf();
+    $pdf = BrowserPdf::fromHtml($html)->format('A4')->margins(3, 3, 3, 3)->landscape()->showBackground()->pdf();
 
     $filename = preg_replace('/[^A-Za-z0-9\-_]/', '_', $record->receipt_no);
 
@@ -137,7 +137,7 @@ Route::get('/incoming-receipts-grifols/{record}/print', function (IncomingReceip
         'receipt' => $record->load('lines.batch.product.principal', 'lines.labeledBy', 'lines.room', 'signoffs', 'location', 'supplier', 'carrier'),
     ]);
 
-    $pdf = Browsershot::html($html)->setNodeBinary((string) config('browsershot.node_binary'))->format('A4')->margins(3, 3, 3, 3)->landscape()->showBackground()->pdf();
+    $pdf = BrowserPdf::fromHtml($html)->format('A4')->margins(3, 3, 3, 3)->landscape()->showBackground()->pdf();
 
     $filename = preg_replace('/[^A-Za-z0-9\-_]/', '_', $record->receipt_no);
 

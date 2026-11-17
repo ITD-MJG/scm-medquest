@@ -14,4 +14,15 @@ return [
     */
     'node_binary' => env('NODE_BINARY', '/home/linuxbrew/.linuxbrew/bin/node'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Chrome binary
+    |--------------------------------------------------------------------------
+    | Leave null to let puppeteer resolve its own downloaded Chrome from the
+    | cache dir (local machines). On hosts where puppeteer's cache is broken
+    | or incomplete, point CHROME_PATH at a system Chrome instead — this skips
+    | puppeteer's per-project browser download entirely.
+    */
+    'chrome_path' => env('CHROME_PATH'),
+
 ];

@@ -32,7 +32,7 @@
                         <p class="mb-0" style="font-size: 13px; padding-left: 2%;">:&ensp;MJG-FOR-SCM.02.002-01</p>
                         <p class="mb-0" style="font-size: 13px; padding-left: 2%;">:&ensp;12 JUN 2023</p>
                         <p class="mb-0" style="font-size: 13px; padding-left: 2%;">:&ensp;09</p>
-                        <p class="mb-0" style="font-size: 13px; padding-left: 2%;">:&ensp;@pageNumber of @totalPages</p>
+                        <p class="mb-0" style="font-size: 13px; padding-left: 2%;">:&ensp;<span class="pageNumber"></span> of <span class="totalPages"></span></p>
                     </div>
                 </div>
             </div>
@@ -82,7 +82,7 @@
                 </div>
             </div>
             <div class="col-5 pe-0 border border-black">
-                <p class="mb-0" style="font-size: 11px;">***) Initial name and date (<i>Inisial nama dan tanggal</i>) or Name for Security (Nama untuk Sekuriti)</p>
+                <p class="mb-0" style="font-size: 11px;">***) Initial name and date (<i>Inisial nama dan tanggal</i>)</p>
             </div>
         </div>
     </div>

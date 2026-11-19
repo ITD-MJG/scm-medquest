@@ -59,11 +59,14 @@ Route::get('/temperature-humidities/bulk-export', function () {
         'tempHumidity' => $tempHumidity,
         'groupedTempHumidity' => $groupedTempHumidity,
     ]);
+    $repeatingHeader = view('print.headers.temperature-humidity-repeating')->render();
     $pdf = BrowserPdf::fromHtml($html)
         ->format('A4')
-        ->margins(3, 3, 3, 3)
+        ->margins(22, 3, 3, 3)
         ->landscape()
         ->showBackground()
+        ->showBrowserHeaderAndFooter()
+        ->headerHtml($repeatingHeader)
         ->pdf();
 
     return response($pdf, 200)
